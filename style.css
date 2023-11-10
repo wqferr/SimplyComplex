@@ -1,0 +1,53 @@
+body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    overflow: hidden;
+    color: white;
+}
+
+/* h1 { */
+/*     background: #7f7fd5; */
+/*     background: -webkit-linear-gradient(to right, #91eae4, #86a8e7, #7f7fd5); */
+/*     background: linear-gradient(to right, #91eae4, #86a8e7, #7f7fd5); */
+/*     background-clip: text; */
+/*     -webkit-backdrop-clip: text; */
+/*     -webkit-text-fill-color: transparent; */
+/* } */
+
+.drawing-board-container {
+    height: 100%;
+    display: flex;
+}
+
+canvas {
+    border: black 1px solid;
+}
+
+#toolbar {
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
+    width: 70px;
+    background-color: #202020;
+}
+
+#toolbar * {
+    margin-bottom: 6px;
+}
+
+#toolbar label {
+    font-size: 12px;
+}
+
+#toolbar input {
+    width: 90%;
+}
+
+#toolbar button {
+    background-color: #1565c0;
+    border: none;
+    border-radius: 4px;
+    color: white;
+    padding: 2px;
+}

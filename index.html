@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+    <title>Simply Complex</title>
+    <script src="fengari-web.js" type="text/javascript" async></script>
+</head>
+<body>
+    <section class="container">
+        <div id="toolbar">
+            <h1>Draw.</h1>
+            <label for="strokeColor">Stroke Color</label>
+            <input type="color" name="strokeColor" id="strokeColor">
+            <label for="strokeWidth">Stroke Width</label>
+            <input type="number" name="strokeWidth" id="strokeWidth" value="5">
+            <button id="clear">Clear</button>
+            <button id="undo">Undo</button>
+        </div>
+        <div class="drawing-board-container">
+            <canvas id="inputBoard"></canvas>
+            <canvas id="outputBoard"></canvas>
+        </div>
+    </section>
+    <script type="application/lua" src="lua/draw.lua" async></script>
+</body>
+</html>

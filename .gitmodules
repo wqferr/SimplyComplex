@@ -1,0 +1,6 @@
+[submodule "lua/imagine"]
+	path = lua/imagine
+	url = git@github.com:wqferr/imagine.git
+[submodule "lua/symdiff"]
+	path = lua/symdiff
+	url = git@github.com:wqferr/symdiff.git
