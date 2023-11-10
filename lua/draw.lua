@@ -37,7 +37,8 @@ local currentInputSquiggle = nil
 ---@type ComplexPath?
 local currentOutputSquiggle = nil
 
-local lineWidth = js.global.document:getElementById "strokeWidth".value
+local lineWidth = BASE_PATH_THICKNESS
+js.global.document:getElementById "strokeWidth".value = tostring(lineWidth)
 local strokeStyle = js.global.document:getElementById "strokeColor".value
 
 local z = sd.var "z"
