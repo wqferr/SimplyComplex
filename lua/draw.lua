@@ -7,7 +7,21 @@ local CPath = require "lua.complexpath"
 local Bounds = require "lua.bounds"
 require "lua.constants"
 
-require "lua.imagineSDBridge"(im, sd)
+sd.setNumericChecks {
+    isNumeric = function(x)
+        return type(x) == "number" or im.isComplex(x)
+    end,
+    isZero = function(x)
+        return x == 0 or x == im.zero
+    end,
+    isOne = function(x)
+        return x == 1 or x == im.one
+    end
+}
+
+sd.exp.func = im.exp
+sd.ln.func = im.log
+sd.sqrt.func = im.sqrt
 
 
 local inputCanvas = js.global.document:getElementById "inputBoard"
@@ -27,11 +41,13 @@ outputCanvas.width = 600
 outputCanvas.height = 600
 
 local inputBounds = Bounds.new(im(-2, -2), im(2, 2), inputCanvas.width, inputCanvas.height)
-local outputBounds = Bounds.new(im(-4, -4), im(4, 4), outputCanvas.width, outputCanvas.height)
+local outputBounds = Bounds.new(im(-2, -2), im(2, 2), outputCanvas.width, outputCanvas.height)
 
 ---@type ComplexPath[]
 local inputSquiggles = {}
 
+-- TODO interpolate between input points if they're too far apart
+-- TODO break path at discontinuities
 ---@type ComplexPath?
 local currentInputSquiggle = nil
 ---@type ComplexPath?
@@ -42,7 +58,7 @@ js.global.document:getElementById "strokeWidth".value = tostring(lineWidth)
 local strokeStyle = js.global.document:getElementById "strokeColor".value
 
 local z = sd.var "z"
-local func = z*z
+local func = sd.sqrt(z)
 
 local function pushMousePoint(mouseEvent)
     if not currentInputSquiggle then
@@ -57,7 +73,9 @@ local function pushMousePoint(mouseEvent)
     ---@type Complex
     ---@diagnostic disable-next-line: assign-type-mismatch
     local fc = func:evaluate(c)
+    -- TODO fix derivative not returning a const node instead of a number
     local dz = func:derivative():evaluate(c):abs()
+    -- local dz = func:derivative()
     local originalThickness = currentInputSquiggle:endThickness() / BASE_PATH_THICKNESS
     currentOutputSquiggle:pushPoint(fc, dz * originalThickness)
 end
@@ -95,18 +113,18 @@ toolbar:addEventListener("change", function(_, event)
 end)
 
 inputCanvas:addEventListener("mousedown", function(_, event)
-    -- inputCtx:beginPath()
-    -- outputCtx:beginPath()
     currentInputSquiggle = CPath.new(strokeStyle, lineWidth)
     currentOutputSquiggle = CPath.new(strokeStyle)
     pushMousePoint(event)
 end)
 
-inputCanvas:addEventListener("mouseup", function(_, event)
+local function finishPath()
     table.insert(inputSquiggles, currentInputSquiggle)
     currentInputSquiggle = nil
     currentOutputSquiggle = nil
-end)
+end
+inputCanvas:addEventListener("mouseup", finishPath)
+inputCanvas:addEventListener("mouseout", finishPath)
 
 inputCanvas:addEventListener("mousemove", function(_, event)
     if not currentInputSquiggle then

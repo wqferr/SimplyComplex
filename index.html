@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style/style.css">
+    <link rel="stylesheet" href="style/normalize.css">
     <title>Simply Complex</title>
     <script src="fengari-web.js" type="text/javascript" async></script>
 </head>
 <body>
     <section class="container">
         <div id="toolbar">
-            <h1>Draw.</h1>
             <label for="strokeColor">Stroke Color</label>
             <input type="color" name="strokeColor" id="strokeColor">
             <label for="strokeWidth">Stroke Width</label>
@@ -20,6 +20,7 @@
         </div>
         <div class="drawing-board-container">
             <canvas id="inputBoard"></canvas>
+            <div class="spacer"></div>
             <canvas id="outputBoard"></canvas>
         </div>
     </section>

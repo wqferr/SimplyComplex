@@ -2,6 +2,7 @@ body {
     margin: 0;
     padding: 0;
     height: 100%;
+    width: 100%;
     overflow: hidden;
     color: white;
 }
@@ -17,11 +18,20 @@ body {
 
 .drawing-board-container {
     height: 100%;
+    width: 100%;
     display: flex;
 }
 
 canvas {
     border: black 1px solid;
+}
+
+#inputBoard {
+    display: inline-block;
+}
+
+#outputBoard {
+    float: right;
 }
 
 #toolbar {
