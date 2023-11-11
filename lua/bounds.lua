@@ -1,4 +1,4 @@
-local im = require "lua.imagine"
+local im = require "imagine"
 
 ---@class Bounds
 ---Represents a rectangular section of the complex plane
@@ -79,6 +79,10 @@ function Bounds:pixelToComplex(px, py)
     local x = lerp(self.lowerLeft.real, self.lowerRight.real, px)
     local y = lerp(self.lowerLeft.imag, self.upperLeft.imag, py)
     return im(x, y)
+end
+
+function Bounds:getArea()
+    return (self.upperRight - self.upperLeft).real * (self.upperLeft - self.lowerLeft).imag
 end
 
 return Bounds

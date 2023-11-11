@@ -1,11 +1,14 @@
--- package.path = "lua/?.lua;lua/?/init.lua;" .. package.path
+package.path = "lua/?.lua;lua/?/init.lua;lua/?/?.lua;" .. package.path
 
 local js = require "js"
 local im = require "lua.imagine"
 local sd = require "lua.symdiff"
 local CPath = require "lua.complexpath"
 local Bounds = require "lua.bounds"
-require "lua.constants"
+for k, v in pairs(Bounds) do
+    print(k)
+end
+require "constants"
 
 sd.setNumericChecks {
     isNumeric = function(x)
@@ -41,7 +44,7 @@ outputCanvas.width = 600
 outputCanvas.height = 600
 
 local inputBounds = Bounds.new(im(-2, -2), im(2, 2), inputCanvas.width, inputCanvas.height)
-local outputBounds = Bounds.new(im(-2, -2), im(2, 2), outputCanvas.width, outputCanvas.height)
+local outputBounds = Bounds.new(im(-4, -4), im(4, 4), outputCanvas.width, outputCanvas.height)
 
 ---@type ComplexPath[]
 local inputSquiggles = {}
@@ -58,7 +61,7 @@ js.global.document:getElementById "strokeWidth".value = tostring(lineWidth)
 local strokeStyle = js.global.document:getElementById "strokeColor".value
 
 local z = sd.var "z"
-local func = sd.sqrt(z)
+local func = z
 
 local function pushMousePoint(mouseEvent)
     if not currentInputSquiggle then
@@ -73,10 +76,8 @@ local function pushMousePoint(mouseEvent)
     ---@type Complex
     ---@diagnostic disable-next-line: assign-type-mismatch
     local fc = func:evaluate(c)
-    -- TODO fix derivative not returning a const node instead of a number
-    local dz = func:derivative():evaluate(c):abs()
-    -- local dz = func:derivative()
-    local originalThickness = currentInputSquiggle:endThickness() / BASE_PATH_THICKNESS
+    local dz = im.abs(func:derivative():evaluate(c))
+    local originalThickness = currentInputSquiggle:endThickness() * outputBounds:getArea() / inputBounds:getArea()
     currentOutputSquiggle:pushPoint(fc, dz * originalThickness)
 end
 
