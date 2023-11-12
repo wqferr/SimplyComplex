@@ -1,30 +1,14 @@
-package.path = "lua/?.lua;lua/?/init.lua;lua/?/?.lua;" .. package.path
+package.path = "lua/?.lua;lua/?/?.lua;lua/?/init.lua;" .. package.path
 
 local js = require "js"
-local im = require "lua.imagine"
-local sd = require "lua.symdiff"
-local CPath = require "lua.complexpath"
-local Bounds = require "lua.bounds"
-for k, v in pairs(Bounds) do
-    print(k)
-end
+_G.im = require "imagine"
+_G.sd = require "symdiff"
+local im = _G.im
+local sd = _G.sd
+local CPath = require "complexpath"
+local Bounds = require "bounds"
 require "constants"
-
-sd.setNumericChecks {
-    isNumeric = function(x)
-        return type(x) == "number" or im.isComplex(x)
-    end,
-    isZero = function(x)
-        return x == 0 or x == im.zero
-    end,
-    isOne = function(x)
-        return x == 1 or x == im.one
-    end
-}
-
-sd.exp.func = im.exp
-sd.ln.func = im.log
-sd.sqrt.func = im.sqrt
+require "im-sd-bridge"
 
 
 local inputCanvas = js.global.document:getElementById "inputBoard"
@@ -43,8 +27,12 @@ inputCanvas.height = 600
 outputCanvas.width = 600
 outputCanvas.height = 600
 
-local inputBounds = Bounds.new(im(-2, -2), im(2, 2), inputCanvas.width, inputCanvas.height)
-local outputBounds = Bounds.new(im(-4, -4), im(4, 4), outputCanvas.width, outputCanvas.height)
+local inputBounds = Bounds.new(
+    im(INPUT_MIN[1], INPUT_MIN[2]),
+    im(INPUT_MAX[1], INPUT_MAX[2]),
+    inputCanvas.width, inputCanvas.height
+)
+local outputBounds = Bounds.new(im(OUTPUT_MIN[1], OUTPUT_MIN[2]), im(OUTPUT_MAX[1], OUTPUT_MAX[2]), outputCanvas.width, outputCanvas.height)
 
 ---@type ComplexPath[]
 local inputSquiggles = {}
@@ -61,7 +49,7 @@ js.global.document:getElementById "strokeWidth".value = tostring(lineWidth)
 local strokeStyle = js.global.document:getElementById "strokeColor".value
 
 local z = sd.var "z"
-local func = z
+local func = FUNC(z)
 
 local function pushMousePoint(mouseEvent)
     if not currentInputSquiggle then
@@ -77,14 +65,32 @@ local function pushMousePoint(mouseEvent)
     ---@diagnostic disable-next-line: assign-type-mismatch
     local fc = func:evaluate(c)
     local dz = im.abs(func:derivative():evaluate(c))
-    local originalThickness = currentInputSquiggle:endThickness() * outputBounds:getArea() / inputBounds:getArea()
+    local originalThickness = currentInputSquiggle:endThickness() * OUTPUT_AREA / INPUT_AREA
     currentOutputSquiggle:pushPoint(fc, dz * originalThickness)
 end
+
+local function drawGuides(ctx, bounds)
+    ctx:setLineDash {5, 3}
+    ctx:beginPath()
+    ctx.strokeStyle = "#000000"
+    ctx.lineWidth = 1
+    local x0, y0 = bounds:complexToPixel(im.zero)
+    local lowerX, upperY = bounds:complexToPixel(bounds.upperLeft)
+    local upperX, lowerY = bounds:complexToPixel(bounds.lowerRight)
+    ctx:moveTo(x0, lowerY)
+    ctx:lineTo(x0, upperY)
+    ctx:moveTo(lowerX, y0)
+    ctx:lineTo(upperX, y0)
+    ctx:stroke()
+end
+drawGuides(inputCtx, inputBounds)
+drawGuides(outputCtx, outputBounds)
 
 local function redraw()
     inputCtx:clearRect(0, 0, inputCanvas.width, inputCanvas.height)
     outputCtx:clearRect(0, 0, outputCanvas.width, outputCanvas.height)
 
+    drawGuides(inputCtx, inputBounds)
     for _, squiggle in ipairs(inputSquiggles) do
         squiggle:draw(inputCtx, inputBounds)
         local outputSquiggle = squiggle:transform(func)

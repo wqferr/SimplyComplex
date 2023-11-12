@@ -1,1 +1,13 @@
 BASE_PATH_THICKNESS = 5
+
+INPUT_MIN = {-2, -2}
+INPUT_MAX = {2, 2}
+OUTPUT_MIN = {-2, -2}
+OUTPUT_MAX = {2, 2}
+
+INPUT_AREA = (INPUT_MAX[1] - INPUT_MIN[1]) * (INPUT_MAX[2] - INPUT_MIN[2])
+OUTPUT_AREA = (OUTPUT_MAX[1] - OUTPUT_MIN[1]) * (OUTPUT_MAX[2] - OUTPUT_MIN[2])
+
+FUNC = function(z)
+    return z*z
+end

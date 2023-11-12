@@ -76,7 +76,7 @@ function ComplexPath:transform(expr)
     local p = ComplexPath.new(self.color)
     for _, pointInfo in ipairs(self.points) do
         local point = pointInfo.point
-        local originalThickness = self:endThickness() / BASE_PATH_THICKNESS
+        local originalThickness = self:endThickness() * OUTPUT_AREA / INPUT_AREA
         p:pushPoint(expr:evaluate(point), expr:derivative(point):abs() * originalThickness)
     end
     return p
