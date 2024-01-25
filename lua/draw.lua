@@ -91,6 +91,7 @@ local function redraw()
     outputCtx:clearRect(0, 0, outputCanvas.width, outputCanvas.height)
 
     drawGuides(inputCtx, inputBounds)
+    drawGuides(outputCtx, outputBounds)
     for _, squiggle in ipairs(inputSquiggles) do
         squiggle:draw(inputCtx, inputBounds)
         local outputSquiggle = squiggle:transform(func)
@@ -103,6 +104,8 @@ toolbar:addEventListener("click", function(_, event)
         inputCtx:clearRect(0, 0, inputCanvas.width, inputCanvas.height)
         outputCtx:clearRect(0, 0, outputCanvas.width, outputCanvas.height)
         inputSquiggles = {}
+        drawGuides(inputCtx, inputBounds)
+        drawGuides(outputCtx, outputBounds)
     elseif event.target.id == "undo" then
         table.remove(inputSquiggles)
         redraw()
