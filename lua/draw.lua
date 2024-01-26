@@ -91,7 +91,7 @@ local function loadFunc(text)
     end
     text = text:gsub("(%d+%.%d+)i%f[%W]", "(%1*i)")
     text = text:gsub("%.(%d+)i%f[%W]", "(0.%1*i)")
-    text = text:gsub("(%d+)i%f[%W]", "%1*i")
+    text = text:gsub("(%d+)i%f[%W]", "(%1*i)")
 
     local fenv = {z = z}
     for name, envValue in pairs(exportedValues) do
