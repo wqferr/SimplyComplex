@@ -5,23 +5,44 @@
 ---@class ComplexPath
 ---@field private points PathPointInfo[] the points composing this path
 ---@field private defaultThickness number the default thickness for the path
+---@field private interpSegments number of segments to insert for every pushPoint operation
 ---@field public color string the color to draw this path with
 local ComplexPath = {}
 local ComplexPath__meta = {__index = ComplexPath}
 
-function ComplexPath.new(color, defaultThickness)
+---Create a new Complex Path
+---@param color string strokeStyle for drawing with a Context2D
+---@param defaultThickness number thickness of segments which dont specify one
+---@param interpSegments integer? number of segments to insert to split each pushPoint operation; defaults to 1
+---@return ComplexPath
+function ComplexPath.new(color, defaultThickness, interpSegments)
     local p = setmetatable({}, ComplexPath__meta)
     p.points = {}
     p.color = color
     p.defaultThickness = defaultThickness
+    p.interpSegments = interpSegments or 1
     return p
 end
 
----Add a new point to the path
+local function pushSinlgePoint(path, c, thickness)
+    table.insert(path.points, {point = c, thickness = thickness or path.defaultThickness})
+end
+
+---Add a new point to the path, or multiple if interpSegments was given to the constructor
 ---@param c Complex the point to add
 ---@param thickness number? the relative line thickness at that point
 function ComplexPath:pushPoint(c, thickness)
-    table.insert(self.points, {point = c, thickness = thickness or self.defaultThickness})
+    if #self.points == 0 then
+        pushSinlgePoint(self, c, thickness)
+        return
+    end
+    local lerpStart = self:endPoint()
+    local lerpEnd = c
+    for segment = 1, self.interpSegments do
+        local lerpT = segment / self.interpSegments
+        local lerpedPoint = (1-lerpT) * lerpStart + lerpT * lerpEnd
+        pushSinlgePoint(self, lerpedPoint, thickness)
+    end
 end
 
 ---Get the starting point of this Path
@@ -39,8 +60,10 @@ end
 ---Draw the last segment in the Path
 ---@param ctx Context2D Drawing context
 ---@param bounds Bounds Bounds of the canvas
-function ComplexPath:drawLastSegment(ctx, bounds)
-    self:drawSegment(ctx, bounds, #self.points - 1)
+function ComplexPath:drawLastAddedSegments(ctx, bounds)
+    for i = self.interpSegments, 1, -1 do
+        self:drawSegment(ctx, bounds, #self.points - i)
+    end
 end
 
 ---Draw a specific segment of the path.

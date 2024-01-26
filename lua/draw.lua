@@ -158,7 +158,7 @@ toolbar:addEventListener("change", function(_, event)
 end)
 
 inputCanvas:addEventListener("mousedown", function(_, event)
-    currentInputSquiggle = CPath.new(strokeStyle, lineWidth)
+    currentInputSquiggle = CPath.new(strokeStyle, lineWidth, INPUT_INTERP_SEGMENTS)
     currentOutputSquiggle = CPath.new(strokeStyle)
     pushMousePoint(event)
 end)
@@ -180,6 +180,6 @@ inputCanvas:addEventListener("mousemove", function(_, event)
 
     pushMousePoint(event)
 
-    currentInputSquiggle:drawLastSegment(inputCtx, inputBounds)
-    currentOutputSquiggle:drawLastSegment(outputCtx, outputBounds)
+    currentInputSquiggle:drawLastAddedSegments(inputCtx, inputBounds)
+    currentOutputSquiggle:drawLastAddedSegments(outputCtx, outputBounds)
 end)
