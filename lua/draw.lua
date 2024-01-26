@@ -30,9 +30,15 @@ outputCanvas.height = 600
 local inputBounds = Bounds.new(
     im(INPUT_MIN[1], INPUT_MIN[2]),
     im(INPUT_MAX[1], INPUT_MAX[2]),
-    inputCanvas.width, inputCanvas.height
+    inputCanvas.width,
+    inputCanvas.height
 )
-local outputBounds = Bounds.new(im(OUTPUT_MIN[1], OUTPUT_MIN[2]), im(OUTPUT_MAX[1], OUTPUT_MAX[2]), outputCanvas.width, outputCanvas.height)
+local outputBounds = Bounds.new(
+    im(OUTPUT_MIN[1], OUTPUT_MIN[2]),
+    im(OUTPUT_MAX[1], OUTPUT_MAX[2]),
+    outputCanvas.width,
+    outputCanvas.height
+)
 
 ---@type ComplexPath[]
 local inputSquiggles = {}
@@ -48,8 +54,37 @@ local lineWidth = BASE_PATH_THICKNESS
 js.global.document:getElementById "strokeWidth".value = tostring(lineWidth)
 local strokeStyle = js.global.document:getElementById "strokeColor".value
 
+local funcTextField = js.global.document:getElementById "func"
+
 local z = sd.var "z"
-local func = FUNC(z)
+
+local function loadFunc(text)
+    -- TODO inject imagine functions into env
+    -- TODO allow for 2+3i style notation (this might be very tricky)
+    if #text > 100 then
+        return nil, "input text too long, won't compile"
+    end
+    local fenv = {z = z}
+    local chunk = load("return "..text, "user function", "t", fenv)
+    if not chunk then
+        return nil, "could not compile"
+    end
+    return chunk()
+end
+
+local func
+
+local function updateFunc()
+    local newFunc, reason = loadFunc(funcTextField.value)
+    print(funcTextField.value, newFunc, reason)
+    if newFunc then
+        func = newFunc
+        -- TODO redraw paths
+    end
+end
+funcTextField.value = DEFAULT_FUNC
+updateFunc()
+-- TODO updatefunc on text input change
 
 local function pushMousePoint(mouseEvent)
     if not currentInputSquiggle then
