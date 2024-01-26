@@ -86,10 +86,12 @@ local exportedValues = {
 }
 
 local function loadFunc(text)
-    -- TODO allow for 2+3i style notation (this might be very tricky)
     if #text > 100 then
         return nil, "Input text too long, won't compile"
     end
+    text = text:gsub("(%d+%.%d+)i%f[%W]", "(%1*i)")
+    text = text:gsub("%.(%d+)i%f[%W]", "(0.%1*i)")
+    text = text:gsub("(%d+)i%f[%W]", "%1*i")
 
     local fenv = {z = z}
     for name, envValue in pairs(exportedValues) do
@@ -212,7 +214,7 @@ inputCanvas:addEventListener("mousemove", function(_, event)
     currentOutputSquiggle:drawLastAddedSegments(outputCtx, outputBounds)
 end)
 
-local function functTextInputChange(_, ev)
+local function functTextInputChange()
     updateFunc()
 end
 funcTextField:addEventListener("change", functTextInputChange)
