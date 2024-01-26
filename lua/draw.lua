@@ -55,36 +55,53 @@ js.global.document:getElementById "strokeWidth".value = tostring(lineWidth)
 local strokeStyle = js.global.document:getElementById "strokeColor".value
 
 local funcTextField = js.global.document:getElementById "func"
+local func
 
 local z = sd.var "z"
+local exportedValues = {
+    i = sd.const(im.i),
+    e = sd.const(math.exp(1)),
+    real = sd.real,
+    imag = sd.imag,
+    exp = sd.exp,
+    log = sd.ln,
+    conj = sd.conj,
+    -- polar = sd.polar, -- TODO allow for functions of multiple inputs in symdiff for sd.polar
+    sqrt = sd.sqrt,
+    -- roots = sd.roots, -- TODO add multifunctions, this would be awesome
+    abs = sd.abs, -- TODO fix problems with the derivative
+    arg = sd.arg,
+    sin = sd.sin,
+    cos = sd.cos,
+    tan = sd.tan,
+    asin = sd.asin,
+    acos = sd.acos,
+    atan = sd.atan,
+    sinh = sd.sinh,
+    cosh = sd.cosh,
+    tanh = sd.tanh,
+    asinh = sd.asinh,
+    acosh = sd.acosh,
+    atanh = sd.atanh,
+}
 
 local function loadFunc(text)
-    -- TODO inject imagine functions into env
     -- TODO allow for 2+3i style notation (this might be very tricky)
     if #text > 100 then
-        return nil, "input text too long, won't compile"
+        return nil, "Input text too long, won't compile"
     end
+
     local fenv = {z = z}
+    for name, envValue in pairs(exportedValues) do
+        fenv[name] = envValue
+    end
+
     local chunk = load("return "..text, "user function", "t", fenv)
     if not chunk then
-        return nil, "could not compile"
+        return nil, "Could not compile"
     end
     return chunk()
 end
-
-local func
-
-local function updateFunc()
-    local newFunc, reason = loadFunc(funcTextField.value)
-    print(funcTextField.value, newFunc, reason)
-    if newFunc then
-        func = newFunc
-        -- TODO redraw paths
-    end
-end
-funcTextField.value = DEFAULT_FUNC
-updateFunc()
--- TODO updatefunc on text input change
 
 local function pushMousePoint(mouseEvent)
     if not currentInputSquiggle then
@@ -97,7 +114,6 @@ local function pushMousePoint(mouseEvent)
     currentInputSquiggle:pushPoint(c)
 
     ---@type Complex
-    ---@diagnostic disable-next-line: assign-type-mismatch
     local fc = func:evaluate(c)
     local dz = im.abs(func:derivative():evaluate(c))
     local originalThickness = currentInputSquiggle:endThickness() * OUTPUT_AREA / INPUT_AREA
@@ -133,6 +149,18 @@ local function redraw()
         outputSquiggle:draw(outputCtx, outputBounds)
     end
 end
+
+local function updateFunc()
+    local newFunc, reason = loadFunc(funcTextField.value)
+    if newFunc then
+        func = newFunc
+        redraw()
+    else
+        print(reason)
+    end
+end
+funcTextField.value = DEFAULT_FUNC
+updateFunc()
 
 toolbar:addEventListener("click", function(_, event)
     if event.target.id == "clear" then
@@ -183,3 +211,9 @@ inputCanvas:addEventListener("mousemove", function(_, event)
     currentInputSquiggle:drawLastAddedSegments(inputCtx, inputBounds)
     currentOutputSquiggle:drawLastAddedSegments(outputCtx, outputBounds)
 end)
+
+local function functTextInputChange(_, ev)
+    updateFunc()
+end
+funcTextField:addEventListener("change", functTextInputChange)
+funcTextField:addEventListener("input", functTextInputChange)
