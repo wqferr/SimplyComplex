@@ -140,31 +140,11 @@ inputCanvas:addEventListener("mousemove", function(_, event)
     if not currentInputSquiggle then
         return
     end
+    -- if currentInputSquiggle is not nil, the same goes for currentOutputSquiggle
     ---@cast currentOutputSquiggle ComplexPath
 
     pushMousePoint(event)
 
-    local x, y = event.clientX - canvasOffsetX, event.clientY - canvasOffsetY
-    inputCtx.lineWidth = lineWidth
-    inputCtx.lineCap = "round"
-    inputCtx.strokeStyle = strokeStyle
-    local p = currentInputSquiggle:penultimatePoint()
-    if p then
-        inputCtx:beginPath()
-        inputCtx:moveTo(inputBounds:complexToPixel(p))
-        inputCtx:lineTo(x, y)
-        inputCtx:stroke()
-    end
-
-    local e = currentOutputSquiggle:endPoint()
-    outputCtx.lineWidth = currentOutputSquiggle:endThickness()
-    outputCtx.lineCap = "round"
-    outputCtx.strokeStyle = strokeStyle
-    p = currentOutputSquiggle:penultimatePoint()
-    if p then
-        outputCtx:beginPath()
-        outputCtx:moveTo(outputBounds:complexToPixel(p))
-        outputCtx:lineTo(outputBounds:complexToPixel(e))
-        outputCtx:stroke()
-    end
+    currentInputSquiggle:drawLastSegment(inputCtx, inputBounds)
+    currentOutputSquiggle:drawLastSegment(outputCtx, outputBounds)
 end)

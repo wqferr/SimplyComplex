@@ -36,6 +36,33 @@ function ComplexPath:endPoint()
     return self.points[#self.points].point
 end
 
+---Draw the last segment in the Path
+---@param ctx Context2D Drawing context
+---@param bounds Bounds Bounds of the canvas
+function ComplexPath:drawLastSegment(ctx, bounds)
+    self:drawSegment(ctx, bounds, #self.points - 1)
+end
+
+---Draw a specific segment of the path.
+---@param ctx Context2D Drawing context
+---@param bounds Bounds Bounds of the canvas
+---@param idx integer Which segment to draw
+function ComplexPath:drawSegment(ctx, bounds, idx)
+    if idx < 1 or idx > #self.points then
+        return
+    end
+    ctx.lineWidth = self.points[idx].thickness
+    ctx.lineCap = "round"
+    ctx.strokeStyle = self.color
+
+    local segmentStart = self.points[idx].point
+    local segmentEnd = self.points[idx+1].point
+    ctx:beginPath()
+    ctx:moveTo(bounds:complexToPixel(segmentStart))
+    ctx:lineTo(bounds:complexToPixel(segmentEnd))
+    ctx:stroke()
+end
+
 function ComplexPath:penultimatePoint()
     if not self.points[2] then
         return nil
@@ -58,17 +85,8 @@ function ComplexPath:setColor(color)
 end
 
 function ComplexPath:draw(ctx, bounds)
-    if not self.points[1] then
-        return
-    end
-    ctx.strokeStyle = self.color
-    ctx.lineCap = "round"
-    for i = 2, #self.points do
-        ctx:beginPath()
-        ctx:moveTo(bounds:complexToPixel(self.points[i-1].point))
-        ctx.lineWidth = self.points[i-1].thickness
-        ctx:lineTo(bounds:complexToPixel(self.points[i].point))
-        ctx:stroke()
+    for i = 1, #self.points - 1 do
+        self:drawSegment(ctx, bounds, i)
     end
 end
 
