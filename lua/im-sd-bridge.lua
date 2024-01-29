@@ -1,22 +1,38 @@
 local sd = _G.sd
 local im = _G.im
-sd.setNumericChecks {
-    isNumeric = function(x)
-        return type(x) == "number" or im.isComplex(x)
-    end,
-    isZero = function(x)
-        return x == 0 or x == im.zero
-    end,
-    isOne = function(x)
-        return x == 1 or x == im.one
-    end
+-- sd.setNumericChecks {
+--     isNumeric = function(x)
+--         return type(x) == "number" or im.isComplex(x)
+--     end,
+--     isZero = function(x)
+--         return x == 0 or x == im.zero
+--     end,
+--     isOne = function(x)
+--         return x == 1 or x == im.one
+--     end
+-- }
+
+local replacedFuncs = {
+    "exp",
+    ["ln"] = "log",
+    "sqrt",
+    "sin",
+    "cos",
+    "tan",
+    "sinh",
+    "cosh",
+    "tanh",
 }
+for k, v in pairs(replacedFuncs) do
+    if type(k) == "number" then
+        sd[v].func = im[v]
+    else
+        sd[k].func = im[v]
+    end
+end
 
-sd.exp.func = im.exp
-sd.ln.func = im.log
-sd.sqrt.func = im.sqrt
-
-local constOne = sd.func(function() return sd.const(im.one) end)
+local one = sd.const(im.one)
+local constOne = sd.func(function() return one end)
 sd.real = sd.func(function(z) return im(z.real, 0) end, true, "real")
 sd.real:setDerivative(constOne)
 sd.imag = sd.func(function(z) return im(z.imag, 0) end, true, "imag")

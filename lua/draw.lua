@@ -33,6 +33,7 @@ local inputBounds = Bounds.new(
     inputCanvas.width,
     inputCanvas.height
 )
+
 local outputBounds = Bounds.new(
     im(OUTPUT_MIN[1], OUTPUT_MIN[2]),
     im(OUTPUT_MAX[1], OUTPUT_MAX[2]),
@@ -43,8 +44,8 @@ local outputBounds = Bounds.new(
 ---@type ComplexPath[]
 local inputSquiggles = {}
 
--- TODO interpolate between input points if they're too far apart
--- TODO break path at discontinuities
+-- TODO: break path at discontinuities
+
 ---@type ComplexPath?
 local currentInputSquiggle = nil
 ---@type ComplexPath?
@@ -59,6 +60,7 @@ local func
 
 local z = sd.var "z"
 local exportedValues = {
+    z = z,
     i = sd.const(im.i),
     e = sd.const(math.exp(1)),
     real = sd.real,
@@ -66,10 +68,9 @@ local exportedValues = {
     exp = sd.exp,
     log = sd.ln,
     conj = sd.conj,
-    -- polar = sd.polar, -- TODO allow for functions of multiple inputs in symdiff for sd.polar
     sqrt = sd.sqrt,
-    -- roots = sd.roots, -- TODO add multifunctions, this would be awesome
-    abs = sd.abs, -- TODO fix problems with the derivative
+    -- roots = sd.roots, -- TODO: add multifunctions, this would be awesome
+    abs = sd.abs,
     arg = sd.arg,
     sin = sd.sin,
     cos = sd.cos,
@@ -93,12 +94,7 @@ local function loadFunc(text)
     text = text:gsub("%.(%d+)i%f[%W]", "(0.%1*i)")
     text = text:gsub("(%d+)i%f[%W]", "(%1*i)")
 
-    local fenv = {z = z}
-    for name, envValue in pairs(exportedValues) do
-        fenv[name] = envValue
-    end
-
-    local chunk = load("return "..text, "user function", "t", fenv)
+    local chunk = load("return "..text, "user function", "t", exportedValues)
     if not chunk then
         return nil, "Could not compile"
     end
@@ -156,6 +152,12 @@ local function updateFunc()
     local newFunc, reason = loadFunc(funcTextField.value)
     if newFunc then
         func = newFunc
+        if type(func) == "number" then
+            func = im.asComplex(func)
+        end
+        if im.isComplex(func) then
+            func = sd.const(func)
+        end
         redraw()
     else
         print(reason)
@@ -188,6 +190,9 @@ toolbar:addEventListener("change", function(_, event)
 end)
 
 inputCanvas:addEventListener("mousedown", function(_, event)
+    -- TODO: calculate interpsegments not in the input side, but on the output side
+    -- this would alloy for dynamic interpolation when necessary for regions of particularly
+    -- large derivatives
     currentInputSquiggle = CPath.new(strokeStyle, lineWidth, INPUT_INTERP_SEGMENTS)
     currentOutputSquiggle = CPath.new(strokeStyle)
     pushMousePoint(event)
@@ -211,6 +216,7 @@ inputCanvas:addEventListener("mousemove", function(_, event)
     pushMousePoint(event)
 
     currentInputSquiggle:drawLastAddedSegments(inputCtx, inputBounds)
+    -- TODO make this an async operation
     currentOutputSquiggle:drawLastAddedSegments(outputCtx, outputBounds)
 end)
 
@@ -219,3 +225,34 @@ local function functTextInputChange()
 end
 funcTextField:addEventListener("change", functTextInputChange)
 funcTextField:addEventListener("input", functTextInputChange)
+--
+--
+-- local function resolveAfter2Seconds()
+--     return js.new(js.global.Promise, function(self, resolve)
+--         js.global:setTimeout(function()
+--             resolve(nil, "resolved")
+--         end, 2000)
+--     end)
+-- end
+-- print("calling")
+-- local prom = resolveAfter2Seconds()
+-- prom.and_then = prom["then"]
+-- prom:and_then(function(self, thing) print("thing:", thing) end)
+--
+-- local promise = require"promise"
+-- local prom2 = promise(function(_, resolve)
+--     js.global:setTimeout(function()
+--         resolve(nil, "resolved")
+--     end, 2000)
+-- end)
+--     :and_then(function(_, thing)
+--         print("middle:", thing)
+--         return promise(function(_, resolve)
+--             js.global:setTimeout(function()
+--                 resolve(nil, "new thing!")
+--             end, 3000)
+--         end)
+--     end)
+--     :and_then(function(_, thing)
+--         print("thing:", thing)
+--     end)

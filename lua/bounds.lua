@@ -65,8 +65,8 @@ end
 ---@return number x x coordinate of the corresponding canvas point
 ---@return number y y coordinate of the corresponding canvas point
 function Bounds:complexToPixel(c)
-    local x = inverseLerp(self.lowerLeft.real, self.lowerRight.real, c.real)
-    local y = inverseLerp(self.lowerLeft.imag, self.upperLeft.imag, c.imag)
+    local x = inverseLerp(self.upperLeft.real, self.upperRight.real, c.real)
+    local y = inverseLerp(self.upperLeft.imag, self.lowerLeft.imag, c.imag)
     x, y = x * self.canvasWidth, y * self.canvasHeight
     return x, y
 end
@@ -77,8 +77,8 @@ end
 ---@return Complex point the corresponding point
 function Bounds:pixelToComplex(px, py)
     px, py = px / self.canvasWidth, py / self.canvasHeight
-    local x = lerp(self.lowerLeft.real, self.lowerRight.real, px)
-    local y = lerp(self.lowerLeft.imag, self.upperLeft.imag, py)
+    local x = lerp(self.upperLeft.real, self.upperRight.real, px)
+    local y = lerp(self.upperLeft.imag, self.lowerLeft.imag, py)
     return im(x, y)
 end
 

@@ -1,0 +1,4 @@
+{
+    "$schema": "https://raw.githubusercontent.com/LuaLS/vscode-lua/v3.7.4/setting/schema.json",
+    "diagnostics.globals": ["js"]
+}
