@@ -1,0 +1,11 @@
+- Add axes labels and ticks
+- Add color picker and/or size (maybe steal from OneNote)
+- [MAYBE] Add pop out editor for longer equations
+    - Maybe deal in WYSIWYG equation editor? That's asking for a lot though
+- [MAYBE] Allow users to enter equations for the input drawing, allowing perfect circles or other function graphs as inputs
+- [MAYBE] Allow users to select a few preset input configurations, such as a square, a circle, multiple concentric circles, a grid of lines, etc.
+- Remove border on output canvas, make its background slightly darker
+- Add border around squiggle currently being drawn
+
+CREDITS:
+Anayã Gimenes Ferreira https://linktr.ee/anayagf anayagimenes@gmail.com

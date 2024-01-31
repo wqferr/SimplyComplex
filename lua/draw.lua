@@ -17,11 +17,7 @@ local toolbar = js.global.document:getElementById "toolbar"
 
 local inputCtx = inputCanvas:getContext "2d"
 local outputCtx = outputCanvas:getContext "2d"
-local canvasOffsetX = inputCanvas.offsetLeft
-local canvasOffsetY = inputCanvas.offsetTop
 
--- canvas.width = js.global.innerWidth - canvasOffsetX
--- canvas.height = js.global.innerWidth - canvasOffsetY
 inputCanvas.width = 600
 inputCanvas.height = 600
 outputCanvas.width = 600
@@ -114,7 +110,7 @@ local function pushMousePoint(mouseEvent)
     end
 
     ---@cast currentOutputSquiggle ComplexPath
-    local x, y = mouseEvent.clientX - canvasOffsetX, mouseEvent.clientY - canvasOffsetY
+    local x, y = mouseEvent.clientX - inputCanvas.offsetLeft, mouseEvent.clientY -  inputCanvas.offsetTop
     local c = inputBounds:pixelToComplex(x, y)
     currentInputSquiggle:pushPoint(c)
 
