@@ -114,7 +114,7 @@ function ComplexPath:draw(ctx, bounds)
 end
 
 function ComplexPath:transform(expr)
-    local p = ComplexPath.new(self.color)
+    local p = ComplexPath.new(self.color, self.defaultThickness)
     for _, pointInfo in ipairs(self.points) do
         local point = pointInfo.point
         local originalThickness = self:endThickness() * OUTPUT_AREA / INPUT_AREA

@@ -93,6 +93,13 @@ local function loadFunc(text)
     text = text:gsub("(%d+%.%d+)i%f[%W]", "(%1*i)")
     text = text:gsub("%.(%d+)i%f[%W]", "(0.%1*i)")
     text = text:gsub("(%d+)i%f[%W]", "(%1*i)")
+    -- TODO: wrap this into a multiexpression
+    -- TODO: create multiexpression in symdiff
+    -- local wrappedText = "{"..text.."}"
+    -- local s, e = wrappedText:find "%b()"
+    -- if s ~= 1 or e ~= #wrappedText then
+    --     return nil, "Unbalanced brackets"
+    -- end
 
     local chunk = load("return "..text, "user function", "t", exportedValues)
     if not chunk then
@@ -194,7 +201,7 @@ inputCanvas:addEventListener("mousedown", function(_, event)
     -- this would alloy for dynamic interpolation when necessary for regions of particularly
     -- large derivatives
     currentInputSquiggle = CPath.new(strokeStyle, lineWidth, INPUT_INTERP_SEGMENTS)
-    currentOutputSquiggle = CPath.new(strokeStyle)
+    currentOutputSquiggle = CPath.new(strokeStyle, lineWidth)
     pushMousePoint(event)
 end)
 
@@ -206,6 +213,7 @@ end
 inputCanvas:addEventListener("mouseup", finishPath)
 inputCanvas:addEventListener("mouseout", finishPath)
 
+-- TODO: add coordinates of mouse to some part of the UI
 inputCanvas:addEventListener("mousemove", function(_, event)
     if not currentInputSquiggle then
         return
