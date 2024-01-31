@@ -90,9 +90,9 @@ local function loadFunc(text)
     if #text > 100 then
         return nil, "Input text too long, won't compile"
     end
-    text = text:gsub("(%d+%.%d+)i%f[%W]", "(%1*i%f[%W])")
-    text = text:gsub("%.(%d+)i%f[%W]", "(0.%1*i%f[%W])")
-    text = text:gsub("(%d+)i%f[%W]", "(%1*i%f[%W])")
+    text = text:gsub("(%d+%.%d+)i%f[%W]", "(%1*i)")
+    text = text:gsub("%.(%d+)i%f[%W]", "(0.%1*i)")
+    text = text:gsub("(%d+)i%f[%W]", "(%1*i)")
     -- TODO: wrap this into a multiexpression
     -- TODO: create multiexpression in symdiff
     -- local wrappedText = "{"..text.."}"
