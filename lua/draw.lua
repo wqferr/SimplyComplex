@@ -92,7 +92,7 @@ local function loadFunc(text)
     -- TODO: wrap this into a multiexpression
     -- TODO: create multiexpression in symdiff
     -- local wrappedText = "{"..text.."}"
-    -- local s, e = wrappedText:find "%b()"
+    -- local s, e = wrappedText:find "%b{}"
     -- if s ~= 1 or e ~= #wrappedText then
     --     return nil, "Unbalanced brackets"
     -- end
