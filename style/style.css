@@ -24,7 +24,7 @@ body {
 }
 
 canvas {
-    border: black 1px solid;
+    /* border: black 1px solid; */
 }
 
 #inputBoard {

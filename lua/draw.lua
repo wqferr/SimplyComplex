@@ -7,6 +7,7 @@ local im = _G.im
 local sd = _G.sd
 local CPath = require "complexpath"
 local Bounds = require "bounds"
+local Axes = require "axes"
 require "constants"
 require "im-sd-bridge"
 
@@ -18,10 +19,10 @@ local toolbar = js.global.document:getElementById "toolbar"
 local inputCtx = inputCanvas:getContext "2d"
 local outputCtx = outputCanvas:getContext "2d"
 
-inputCanvas.width = 600
-inputCanvas.height = 600
-outputCanvas.width = 600
-outputCanvas.height = 600
+inputCanvas.width = CANVAS_SIDE_LEN
+inputCanvas.height = CANVAS_SIDE_LEN
+outputCanvas.width = CANVAS_SIDE_LEN
+outputCanvas.height = CANVAS_SIDE_LEN
 
 local inputBounds = Bounds.new(
     im(INPUT_MIN[1], INPUT_MIN[2]),
@@ -36,6 +37,9 @@ local outputBounds = Bounds.new(
     outputCanvas.width,
     outputCanvas.height
 )
+
+local inputAxes = Axes(inputBounds, inputCanvas, inputCtx)
+local outputAxes = Axes(outputBounds, outputCanvas, outputCtx)
 
 ---@type ComplexPath[]
 local inputSquiggles = {}
@@ -121,29 +125,17 @@ local function pushMousePoint(mouseEvent)
     currentOutputSquiggle:pushPoint(fc, dz * originalThickness)
 end
 
-local function drawGuides(ctx, bounds)
-    ctx:setLineDash {5, 3}
-    ctx:beginPath()
-    ctx.strokeStyle = "#000000"
-    ctx.lineWidth = 1
-    local x0, y0 = bounds:complexToPixel(im.zero)
-    local lowerX, upperY = bounds:complexToPixel(bounds.upperLeft)
-    local upperX, lowerY = bounds:complexToPixel(bounds.lowerRight)
-    ctx:moveTo(x0, lowerY)
-    ctx:lineTo(x0, upperY)
-    ctx:moveTo(lowerX, y0)
-    ctx:lineTo(upperX, y0)
-    ctx:stroke()
+local function drawGuides()
+    inputAxes:draw()
+    outputAxes:draw()
 end
-drawGuides(inputCtx, inputBounds)
-drawGuides(outputCtx, outputBounds)
+drawGuides()
 
 local function redraw()
     inputCtx:clearRect(0, 0, inputCanvas.width, inputCanvas.height)
     outputCtx:clearRect(0, 0, outputCanvas.width, outputCanvas.height)
 
-    drawGuides(inputCtx, inputBounds)
-    drawGuides(outputCtx, outputBounds)
+    drawGuides()
     for _, squiggle in ipairs(inputSquiggles) do
         squiggle:draw(inputCtx, inputBounds)
         local outputSquiggle = squiggle:transform(func)
@@ -174,8 +166,7 @@ toolbar:addEventListener("click", function(_, event)
         inputCtx:clearRect(0, 0, inputCanvas.width, inputCanvas.height)
         outputCtx:clearRect(0, 0, outputCanvas.width, outputCanvas.height)
         inputSquiggles = {}
-        drawGuides(inputCtx, inputBounds)
-        drawGuides(outputCtx, outputBounds)
+        drawGuides()
     elseif event.target.id == "undo" then
         table.remove(inputSquiggles)
         redraw()

@@ -82,4 +82,24 @@ function Bounds:pixelToComplex(px, py)
     return im(x, y)
 end
 
+local function contains1D(x, min, max)
+    return min <= x and x <= max
+end
+
+function Bounds:contains(c)
+    return contains1D(c.real, self.upperLeft.real, self.upperRight.real)
+        and contains1D(c.imag, self.lowerLeft.imag, self.upperLeft.imag)
+end
+
+function Bounds:measurementToPixels(distance)
+    local m, _ = self:complexToPixel(im(distance, 0))
+    local z, _ = self:complexToPixel(im.zero)
+    return m - z
+end
+
+function Bounds:pixelsToMeasurement(pixels)
+    local d = self:pixelToComplex(pixels, 0) - self:pixelToComplex(0, 0)
+    return d.real
+end
+
 return Bounds
