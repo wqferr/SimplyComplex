@@ -43,13 +43,10 @@ local outputAxes = Axes(outputBounds, outputCanvas, outputCtx)
 
 ---@type ComplexPath[]
 local inputSquiggles = {}
+---@type ComplexPath[]
+local outputSquiggles = {}
 
 -- TODO: break path at discontinuities
-
----@type ComplexPath?
-local currentInputSquiggle = nil
----@type ComplexPath?
-local currentOutputSquiggle = nil
 
 local lineWidth = BASE_PATH_THICKNESS
 js.global.document:getElementById "strokeWidth".value = tostring(lineWidth)
@@ -57,6 +54,7 @@ local strokeStyle = js.global.document:getElementById "strokeColor".value
 
 local funcTextField = js.global.document:getElementById "func"
 local func
+local shouldRedraw
 
 local z = sd.var "z"
 local exportedValues = {
@@ -86,6 +84,22 @@ local exportedValues = {
     atanh = sd.atanh,
 }
 
+local lastMouseX, lastMouseY
+local redraw
+local userDrawing
+
+local function currentInputSquiggle()
+    return inputSquiggles[#inputSquiggles]
+end
+
+local function currentOutputSquiggle()
+    return outputSquiggles[#outputSquiggles]
+end
+
+local function markDirty()
+    shouldRedraw = true
+end
+
 local function loadFunc(text)
     if #text > 100 then
         return nil, "Input text too long, won't compile"
@@ -108,21 +122,39 @@ local function loadFunc(text)
     return chunk()
 end
 
-local function pushMousePoint(mouseEvent)
-    if not currentInputSquiggle then
+local function calculateFuncAndThickness(c)
+    ---@type Complex
+    local fc = func:evaluate(c)
+    local dz = func:derivative():evaluate(c):abs()
+    local originalThickness = currentInputSquiggle():endThickness() * OUTPUT_AREA / INPUT_AREA
+    return fc, originalThickness * dz
+end
+
+local function updateLastPoint(c)
+    currentInputSquiggle():updateLastPoint(c)
+    currentOutputSquiggle():updateLastPoint(calculateFuncAndThickness(c))
+    markDirty()
+end
+
+local function shouldCreateNewMousePoint(x, y)
+    return math.sqrt((x-lastMouseX)^2 + (y-lastMouseY)^2) > MIN_PIXEL_DIST_FOR_NEW_POINT
+end
+
+local function pushMousePoint(mouseEvent, forceNewPoint)
+    if not userDrawing then
         return
     end
 
-    ---@cast currentOutputSquiggle ComplexPath
     local x, y = mouseEvent.clientX - inputCanvas.offsetLeft, mouseEvent.clientY -  inputCanvas.offsetTop
     local c = inputBounds:pixelToComplex(x, y)
-    currentInputSquiggle:pushPoint(c)
-
-    ---@type Complex
-    local fc = func:evaluate(c)
-    local dz = im.abs(func:derivative():evaluate(c))
-    local originalThickness = currentInputSquiggle:endThickness() * OUTPUT_AREA / INPUT_AREA
-    currentOutputSquiggle:pushPoint(fc, dz * originalThickness)
+    if forceNewPoint or shouldCreateNewMousePoint(x, y) then
+        currentInputSquiggle():pushPoint(c)
+        currentOutputSquiggle():pushPoint(calculateFuncAndThickness(c))
+        lastMouseX, lastMouseY = x, y
+        markDirty()
+    else
+        updateLastPoint(c)
+    end
 end
 
 local function drawGuides()
@@ -131,16 +163,24 @@ local function drawGuides()
 end
 drawGuides()
 
-local function redraw()
+function redraw()
     inputCtx:clearRect(0, 0, inputCanvas.width, inputCanvas.height)
     outputCtx:clearRect(0, 0, outputCanvas.width, outputCanvas.height)
-
     drawGuides()
     for _, squiggle in ipairs(inputSquiggles) do
         squiggle:draw(inputCtx, inputBounds)
-        local outputSquiggle = squiggle:transform(func)
-        outputSquiggle:draw(outputCtx, outputBounds)
     end
+    for _, squiggle in ipairs(outputSquiggles) do
+        squiggle:draw(outputCtx, outputBounds)
+    end
+    shouldRedraw = false
+end
+
+local function fullyRecalculate()
+    for i, inSquiggle in ipairs(inputSquiggles) do
+        outputSquiggles[i] = inSquiggle:transform(func)
+    end
+    redraw()
 end
 
 local function updateFunc()
@@ -153,7 +193,7 @@ local function updateFunc()
         if im.isComplex(func) then
             func = sd.const(func)
         end
-        redraw()
+        fullyRecalculate()
     else
         print(reason)
     end
@@ -166,9 +206,11 @@ toolbar:addEventListener("click", function(_, event)
         inputCtx:clearRect(0, 0, inputCanvas.width, inputCanvas.height)
         outputCtx:clearRect(0, 0, outputCanvas.width, outputCanvas.height)
         inputSquiggles = {}
+        outputSquiggles = {}
         drawGuides()
     elseif event.target.id == "undo" then
         table.remove(inputSquiggles)
+        table.remove(outputSquiggles)
         redraw()
     elseif event.target.id == "redraw" then
         redraw()
@@ -184,35 +226,28 @@ toolbar:addEventListener("change", function(_, event)
 end)
 
 inputCanvas:addEventListener("mousedown", function(_, event)
-    -- TODO: calculate interpsegments not in the input side, but on the output side
-    -- this would alloy for dynamic interpolation when necessary for regions of particularly
-    -- large derivatives
-    currentInputSquiggle = CPath.new(strokeStyle, lineWidth, INPUT_INTERP_SEGMENTS)
-    currentOutputSquiggle = CPath.new(strokeStyle, lineWidth)
-    pushMousePoint(event)
+    -- TODO: readd interpolation now on the output side
+    userDrawing = true
+    table.insert(inputSquiggles, CPath.new(strokeStyle, lineWidth --[[, INPUT_INTERP_SEGMENTS]]))
+    table.insert(outputSquiggles, CPath.new(strokeStyle, lineWidth))
+    pushMousePoint(event, true)
+    -- twice, for end point manipulation
+    pushMousePoint(event, true)
 end)
 
 local function finishPath()
-    table.insert(inputSquiggles, currentInputSquiggle)
-    currentInputSquiggle = nil
-    currentOutputSquiggle = nil
+    userDrawing = false
 end
 inputCanvas:addEventListener("mouseup", finishPath)
 inputCanvas:addEventListener("mouseout", finishPath)
 
 -- TODO: add coordinates of mouse to some part of the UI
 inputCanvas:addEventListener("mousemove", function(_, event)
-    if not currentInputSquiggle then
+    if not userDrawing then
         return
     end
-    -- if currentInputSquiggle is not nil, the same goes for currentOutputSquiggle
-    ---@cast currentOutputSquiggle ComplexPath
 
     pushMousePoint(event)
-
-    currentInputSquiggle:drawLastAddedSegments(inputCtx, inputBounds)
-    -- TODO make this an async operation
-    currentOutputSquiggle:drawLastAddedSegments(outputCtx, outputBounds)
 end)
 
 local function functTextInputChange()
@@ -220,34 +255,11 @@ local function functTextInputChange()
 end
 funcTextField:addEventListener("change", functTextInputChange)
 funcTextField:addEventListener("input", functTextInputChange)
---
---
--- local function resolveAfter2Seconds()
---     return js.new(js.global.Promise, function(self, resolve)
---         js.global:setTimeout(function()
---             resolve(nil, "resolved")
---         end, 2000)
---     end)
--- end
--- print("calling")
--- local prom = resolveAfter2Seconds()
--- prom.and_then = prom["then"]
--- prom:and_then(function(self, thing) print("thing:", thing) end)
---
--- local promise = require"promise"
--- local prom2 = promise(function(_, resolve)
---     js.global:setTimeout(function()
---         resolve(nil, "resolved")
---     end, 2000)
--- end)
---     :and_then(function(_, thing)
---         print("middle:", thing)
---         return promise(function(_, resolve)
---             js.global:setTimeout(function()
---                 resolve(nil, "new thing!")
---             end, 3000)
---         end)
---     end)
---     :and_then(function(_, thing)
---         print("thing:", thing)
---     end)
+
+local function redrawIfDirty()
+    if shouldRedraw then
+        redraw()
+    end
+end
+
+js.global:setInterval(redrawIfDirty, 1000 / 60)

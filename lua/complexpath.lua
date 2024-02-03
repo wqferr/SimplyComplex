@@ -5,7 +5,7 @@
 ---@class ComplexPath
 ---@field private points PathPointInfo[] the points composing this path
 ---@field private defaultThickness number the default thickness for the path
----@field private interpSegments number of segments to insert for every pushPoint operation
+-- -@field private interpSegments number of segments to insert for every pushPoint operation
 ---@field public color string the color to draw this path with
 local ComplexPath = {}
 local ComplexPath__meta = {__index = ComplexPath}
@@ -15,34 +15,44 @@ local ComplexPath__meta = {__index = ComplexPath}
 ---@param defaultThickness number thickness of segments which dont specify one
 ---@param interpSegments integer? number of segments to insert to split each pushPoint operation; defaults to 1
 ---@return ComplexPath
-function ComplexPath.new(color, defaultThickness, interpSegments)
+function ComplexPath.new(color, defaultThickness--[[, interpSegments]])
     local p = setmetatable({}, ComplexPath__meta)
     p.points = {}
     p.color = color
     p.defaultThickness = defaultThickness
-    p.interpSegments = interpSegments or 1
+    -- p.interpSegments = interpSegments or 1
     return p
 end
 
-local function pushSinlgePoint(path, c, thickness)
-    table.insert(path.points, {point = c, thickness = thickness or path.defaultThickness})
-end
+-- local function pushSinglePoint(path, c, thickness)
+--     table.insert(path.points, {point = c, thickness = thickness or path.defaultThickness})
+-- end
 
 ---Add a new point to the path, or multiple if interpSegments was given to the constructor
 ---@param c Complex the point to add
 ---@param thickness number? the relative line thickness at that point
 function ComplexPath:pushPoint(c, thickness)
+    table.insert(self.points, {point = c, thickness = thickness or self.defaultThickness})
+    -- if #self.points == 0 then
+    -- pushSinglePoint(self, c, thickness)
+    --     return
+    -- end
+    -- local lerpStart = self:endPoint()
+    -- local lerpEnd = c
+    -- for segment = 1, self.interpSegments do
+    --     local lerpT = segment / self.interpSegments
+    --     local lerpedPoint = (1-lerpT) * lerpStart + lerpT * lerpEnd
+    --     pushSinglePoint(self, lerpedPoint, thickness)
+    -- end
+end
+
+function ComplexPath:updateLastPoint(c, thickness)
     if #self.points == 0 then
-        pushSinlgePoint(self, c, thickness)
-        return
+        error("Cannot update last point that doesn't exist", 2)
     end
-    local lerpStart = self:endPoint()
-    local lerpEnd = c
-    for segment = 1, self.interpSegments do
-        local lerpT = segment / self.interpSegments
-        local lerpedPoint = (1-lerpT) * lerpStart + lerpT * lerpEnd
-        pushSinlgePoint(self, lerpedPoint, thickness)
-    end
+    local p = self.points[#self.points]
+    p.point = c
+    p.thickness = thickness
 end
 
 ---Get the starting point of this Path
@@ -61,9 +71,9 @@ end
 ---@param ctx Context2D Drawing context
 ---@param bounds Bounds Bounds of the canvas
 function ComplexPath:drawLastAddedSegments(ctx, bounds)
-    for i = self.interpSegments, 1, -1 do
-        self:drawSegment(ctx, bounds, #self.points - i)
-    end
+    -- for i = self.interpSegments, 1, -1 do
+        self:drawSegment(ctx, bounds, #self.points - 1--[[ - i]])
+    -- end
 end
 
 ---Draw a specific segment of the path.
@@ -71,7 +81,7 @@ end
 ---@param bounds Bounds Bounds of the canvas
 ---@param idx integer Which segment to draw
 function ComplexPath:drawSegment(ctx, bounds, idx)
-    if idx < 1 or idx > #self.points then
+    if idx < 1 or idx >= #self.points then
         return
     end
     ctx.lineWidth = self.points[idx].thickness
@@ -86,16 +96,9 @@ function ComplexPath:drawSegment(ctx, bounds, idx)
     ctx:stroke()
 end
 
-function ComplexPath:penultimatePoint()
-    if not self.points[2] then
-        return nil
-    end
-    return self.points[#self.points-1].point
-end
-
 function ComplexPath:endThickness()
     if self.points[1] then
-        return self.points[#self.points].thickness
+        return self.points[#self.points].thickness or self.defaultThickness
     else
         return nil
     end
