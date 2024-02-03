@@ -137,7 +137,58 @@ local function updateLastPoint(c)
 end
 
 local function shouldCreateNewMousePoint(x, y)
+    if not lastMouseX or not lastMouseY then
+        return true
+    end
     return math.sqrt((x-lastMouseX)^2 + (y-lastMouseY)^2) > MIN_PIXEL_DIST_FOR_NEW_POINT
+end
+
+-- FIXME: update this when user zooms out
+local maxTolerableDistanceForInterp = outputBounds:pixelsToMeasurement(MAX_PIXEL_DISTANCE_BEFORE_INTERP)
+local function recursivelyPushPointsIfNeeded(depth, targetInputPoint, targetOutputPoint, endThickness)
+    if not targetOutputPoint or not endThickness then
+        targetOutputPoint, endThickness = calculateFuncAndThickness(targetInputPoint)
+    end
+    local dist = (targetOutputPoint - currentOutputSquiggle():endPoint()):abs()
+    local interpStart = currentInputSquiggle():endPoint()
+    local interpEnd = targetInputPoint
+    if dist >= MAX_PIXEL_DISTANCE_BEFORE_DISCONTINUITY then
+        currentInputSquiggle():pushPoint(targetInputPoint)
+        currentOutputSquiggle():pushPoint(targetOutputPoint, endThickness, true)
+    elseif dist >= maxTolerableDistanceForInterp and depth < MAX_INTERP_TRIES then
+        for i = 1, INTERP_STEPS do
+            local interpT = i / INTERP_STEPS
+            local interpPoint = (1-interpT) * interpStart + interpT * interpEnd
+            local interpF, interpThickness = calculateFuncAndThickness(interpPoint)
+            recursivelyPushPointsIfNeeded(depth+1, interpPoint, interpF, interpThickness)
+        end
+    else
+        currentInputSquiggle():pushPoint(targetInputPoint)
+        currentOutputSquiggle():pushPoint(targetOutputPoint, endThickness)
+    end
+end
+
+local function simplePushPoint(x, y, c)
+    currentInputSquiggle():pushPoint(c)
+    currentOutputSquiggle():pushPoint(calculateFuncAndThickness(c))
+    lastMouseX, lastMouseY = x, y
+    markDirty()
+end
+
+local function createNewMousePoint(x, y, c)
+    recursivelyPushPointsIfNeeded(1, c)
+    lastMouseX, lastMouseY = x, y
+    markDirty()
+end
+
+local function pushComplexPoint(c, x, y, forceNewPoint)
+    if forceNewPoint then
+        simplePushPoint(x, y, c)
+    elseif shouldCreateNewMousePoint(x, y) then
+        createNewMousePoint(x, y, c)
+    else
+        updateLastPoint(c)
+    end
 end
 
 local function pushMousePoint(mouseEvent, forceNewPoint)
@@ -147,14 +198,7 @@ local function pushMousePoint(mouseEvent, forceNewPoint)
 
     local x, y = mouseEvent.clientX - inputCanvas.offsetLeft, mouseEvent.clientY -  inputCanvas.offsetTop
     local c = inputBounds:pixelToComplex(x, y)
-    if forceNewPoint or shouldCreateNewMousePoint(x, y) then
-        currentInputSquiggle():pushPoint(c)
-        currentOutputSquiggle():pushPoint(calculateFuncAndThickness(c))
-        lastMouseX, lastMouseY = x, y
-        markDirty()
-    else
-        updateLastPoint(c)
-    end
+    pushComplexPoint(c, x, y, forceNewPoint)
 end
 
 local function drawGuides()
@@ -176,10 +220,37 @@ function redraw()
     shouldRedraw = false
 end
 
-local function fullyRecalculate()
-    for i, inSquiggle in ipairs(inputSquiggles) do
-        outputSquiggles[i] = inSquiggle:transform(func)
+local function startPath(mode, arg)
+    userDrawing = true
+
+    table.insert(inputSquiggles, CPath.new(strokeStyle, lineWidth))
+    table.insert(outputSquiggles, CPath.new(strokeStyle, lineWidth, MAX_PATH_THICKNESS))
+    if mode == "user" then
+        pushMousePoint(arg, true)
+        -- twice, for end point manipulation
+        pushMousePoint(arg, true)
+    else
+        pushComplexPoint(arg, nil, nil, true)
     end
+end
+
+local function finishPath()
+    userDrawing = false
+end
+
+local lockUserInput = false
+local function fullyRecalculate()
+    local oldInputSquiggles = inputSquiggles
+    inputSquiggles, outputSquiggles = {}, {}
+    lockUserInput = true
+    for _, squiggle in ipairs(oldInputSquiggles) do
+        startPath("prog", squiggle:startPoint())
+        for point in squiggle:tail() do
+            recursivelyPushPointsIfNeeded(1, point)
+        end
+        finishPath()
+    end
+    lockUserInput = false
     redraw()
 end
 
@@ -226,24 +297,21 @@ toolbar:addEventListener("change", function(_, event)
 end)
 
 inputCanvas:addEventListener("mousedown", function(_, event)
-    -- TODO: readd interpolation now on the output side
-    userDrawing = true
-    table.insert(inputSquiggles, CPath.new(strokeStyle, lineWidth --[[, INPUT_INTERP_SEGMENTS]]))
-    table.insert(outputSquiggles, CPath.new(strokeStyle, lineWidth))
-    pushMousePoint(event, true)
-    -- twice, for end point manipulation
-    pushMousePoint(event, true)
+    startPath("user", event)
 end)
 
-local function finishPath()
-    userDrawing = false
+local function userFinishPath()
+    if lockUserInput then
+        return
+    end
+    finishPath()
 end
-inputCanvas:addEventListener("mouseup", finishPath)
-inputCanvas:addEventListener("mouseout", finishPath)
+inputCanvas:addEventListener("mouseup", userFinishPath)
+inputCanvas:addEventListener("mouseout", userFinishPath)
 
 -- TODO: add coordinates of mouse to some part of the UI
 inputCanvas:addEventListener("mousemove", function(_, event)
-    if not userDrawing then
+    if not userDrawing or lockUserInput then
         return
     end
 
@@ -251,9 +319,11 @@ inputCanvas:addEventListener("mousemove", function(_, event)
 end)
 
 local function functTextInputChange()
+    if lockUserInput then
+        return
+    end
     updateFunc()
 end
-funcTextField:addEventListener("change", functTextInputChange)
 funcTextField:addEventListener("input", functTextInputChange)
 
 local function redrawIfDirty()

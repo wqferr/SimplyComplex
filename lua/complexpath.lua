@@ -5,7 +5,8 @@
 ---@class ComplexPath
 ---@field private points PathPointInfo[] the points composing this path
 ---@field private defaultThickness number the default thickness for the path
--- -@field private interpSegments number of segments to insert for every pushPoint operation
+---@field private maxThickness number the maximum allowed thickness for the path
+---@field private discontinuities {number: boolean} points at which the path is discontinuous
 ---@field public color string the color to draw this path with
 local ComplexPath = {}
 local ComplexPath__meta = {__index = ComplexPath}
@@ -13,14 +14,15 @@ local ComplexPath__meta = {__index = ComplexPath}
 ---Create a new Complex Path
 ---@param color string strokeStyle for drawing with a Context2D
 ---@param defaultThickness number thickness of segments which dont specify one
----@param interpSegments integer? number of segments to insert to split each pushPoint operation; defaults to 1
+---@param maxThickness number? maximum allowed value for thickness
 ---@return ComplexPath
-function ComplexPath.new(color, defaultThickness--[[, interpSegments]])
+function ComplexPath.new(color, defaultThickness, maxThickness)
     local p = setmetatable({}, ComplexPath__meta)
     p.points = {}
     p.color = color
     p.defaultThickness = defaultThickness
-    -- p.interpSegments = interpSegments or 1
+    p.discontinuities = {}
+    p.maxThickness = maxThickness or math.huge
     return p
 end
 
@@ -31,28 +33,43 @@ end
 ---Add a new point to the path, or multiple if interpSegments was given to the constructor
 ---@param c Complex the point to add
 ---@param thickness number? the relative line thickness at that point
-function ComplexPath:pushPoint(c, thickness)
-    table.insert(self.points, {point = c, thickness = thickness or self.defaultThickness})
-    -- if #self.points == 0 then
-    -- pushSinglePoint(self, c, thickness)
-    --     return
-    -- end
-    -- local lerpStart = self:endPoint()
-    -- local lerpEnd = c
-    -- for segment = 1, self.interpSegments do
-    --     local lerpT = segment / self.interpSegments
-    --     local lerpedPoint = (1-lerpT) * lerpStart + lerpT * lerpEnd
-    --     pushSinglePoint(self, lerpedPoint, thickness)
-    -- end
+---@param discont boolean? if this is a discontinuity
+function ComplexPath:pushPoint(c, thickness, discont)
+    thickness = thickness or self.defaultThickness
+    if thickness and thickness > self.maxThickness then
+        thickness = self.maxThickness
+    end
+    table.insert(self.points, {point = c, thickness = thickness})
+    if discont then
+        self:setDiscontinuityAtEndPoint()
+    end
 end
 
+---Mark the current end point as a discontinuity
+function ComplexPath:setDiscontinuityAtEndPoint()
+    self.discontinuities[#self.points] = true
+end
+
+---Iterate through all but the first of the path's points
+---@return function iter the iterator
+function ComplexPath:tail()
+    local i = 1
+    return function()
+        i = i + 1
+        return self.points[i] and self.points[i].point
+    end
+end
+
+---Replace last point with new values
+---@param c any
+---@param thickness any
 function ComplexPath:updateLastPoint(c, thickness)
     if #self.points == 0 then
         error("Cannot update last point that doesn't exist", 2)
     end
     local p = self.points[#self.points]
     p.point = c
-    p.thickness = thickness
+    p.thickness = math.min(thickness or self.defaultThickness, self.maxThickness)
 end
 
 ---Get the starting point of this Path
@@ -70,10 +87,8 @@ end
 ---Draw the last segment in the Path
 ---@param ctx Context2D Drawing context
 ---@param bounds Bounds Bounds of the canvas
-function ComplexPath:drawLastAddedSegments(ctx, bounds)
-    -- for i = self.interpSegments, 1, -1 do
-        self:drawSegment(ctx, bounds, #self.points - 1--[[ - i]])
-    -- end
+function ComplexPath:drawLastAddedSegment(ctx, bounds)
+    self:drawSegment(ctx, bounds, #self.points - 1)
 end
 
 ---Draw a specific segment of the path.
@@ -81,7 +96,7 @@ end
 ---@param bounds Bounds Bounds of the canvas
 ---@param idx integer Which segment to draw
 function ComplexPath:drawSegment(ctx, bounds, idx)
-    if idx < 1 or idx >= #self.points then
+    if idx < 1 or idx >= #self.points or self.discontinuities[idx+1] then
         return
     end
     ctx.lineWidth = self.points[idx].thickness
