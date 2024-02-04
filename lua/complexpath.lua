@@ -4,10 +4,10 @@
 
 ---@class ComplexPath
 ---@field private points PathPointInfo[] the points composing this path
----@field private defaultThickness number the default thickness for the path
 ---@field private maxThickness number the maximum allowed thickness for the path
 ---@field private discontinuities {number: boolean} points at which the path is discontinuous
 ---@field public color string the color to draw this path with
+---@field public defaultThickness number the default thickness for the path
 local ComplexPath = {}
 local ComplexPath__meta = {__index = ComplexPath}
 

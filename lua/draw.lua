@@ -220,11 +220,11 @@ function redraw()
     shouldRedraw = false
 end
 
-local function startPath(mode, arg)
+local function startPath(mode, arg, color, thickness)
     userDrawing = true
 
-    table.insert(inputSquiggles, CPath.new(strokeStyle, lineWidth))
-    table.insert(outputSquiggles, CPath.new(strokeStyle, lineWidth, MAX_PATH_THICKNESS))
+    table.insert(inputSquiggles, CPath.new(color, thickness))
+    table.insert(outputSquiggles, CPath.new(color, thickness, MAX_PATH_THICKNESS))
     if mode == "user" then
         pushMousePoint(arg, true)
         -- twice, for end point manipulation
@@ -244,7 +244,7 @@ local function fullyRecalculate()
     inputSquiggles, outputSquiggles = {}, {}
     lockUserInput = true
     for _, squiggle in ipairs(oldInputSquiggles) do
-        startPath("prog", squiggle:startPoint())
+        startPath("prog", squiggle:startPoint(), squiggle.color, squiggle.defaultThickness)
         for point in squiggle:tail() do
             recursivelyPushPointsIfNeeded(1, point)
         end
@@ -288,16 +288,16 @@ toolbar:addEventListener("click", function(_, event)
     end
 end)
 
-toolbar:addEventListener("change", function(_, event)
+toolbar:addEventListener("input", function(_, event)
     if event.target.id == "strokeColor" then
         strokeStyle = event.target.value
     elseif event.target.id == "strokeWidth" then
-        lineWidth = event.target.value
+        lineWidth = tonumber(event.target.value) or BASE_PATH_THICKNESS
     end
 end)
 
 inputCanvas:addEventListener("mousedown", function(_, event)
-    startPath("user", event)
+    startPath("user", event, strokeStyle, lineWidth)
 end)
 
 local function userFinishPath()
