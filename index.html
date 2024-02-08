@@ -12,7 +12,8 @@
     <section class="container">
         <div id="toolbar">
             <label for="strokeColor">Stroke Color</label>
-            <input type="color" name="strokeColor" id="strokeColor">
+            <input type="color" name="strokeColor" id="strokeColor" value="#e44444">
+            <!-- <toolcool-color-picker color="#e44444" button-width="2rem" button-height="2rem" id="strokeColor"></toolcool-color-picker> -->
             <label for="strokeWidth">Stroke Width</label>
             <input type="number" name="strokeWidth" id="strokeWidth" value="5">
             <button id="clear">Clear</button>
@@ -25,6 +26,7 @@
         <!-- TODO: align text to the right -->
         <input type="text" id="func">
     </section>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toolcool-color-picker/dist/toolcool-color-picker.min.js"></script>
     <script type="application/lua" src="lua/draw.lua" async></script>
 </body>
 </html>

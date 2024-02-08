@@ -69,7 +69,7 @@ function ComplexPath:updateLastPoint(c, thickness)
     end
     local p = self.points[#self.points]
     p.point = c
-    p.thickness = math.min(thickness or self.defaultThickness, self.maxThickness)
+    p.thickness = math.min(thickness or p.thickness or self.defaultThickness, self.maxThickness)
 end
 
 ---Get the starting point of this Path
@@ -81,6 +81,9 @@ end
 ---Get the ending point of this Path
 ---@return Complex end the end point
 function ComplexPath:endPoint()
+    if #self.points == 0 then
+        error("No points exist in this path", 2)
+    end
     return self.points[#self.points].point
 end
 
@@ -88,6 +91,9 @@ end
 ---@param ctx Context2D Drawing context
 ---@param bounds Bounds Bounds of the canvas
 function ComplexPath:drawLastAddedSegment(ctx, bounds)
+    -- if #self.points > 2 then
+    --     print(self.points[#self.points-2].point, "::->", self.points[#self.points-1].point, "->", self.points[#self.points].point)
+    -- end
     self:drawSegment(ctx, bounds, #self.points - 1)
 end
 

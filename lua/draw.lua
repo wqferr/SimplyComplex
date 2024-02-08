@@ -14,15 +14,23 @@ require "im-sd-bridge"
 
 local inputCanvas = js.global.document:getElementById "inputBoard"
 local outputCanvas = js.global.document:getElementById "outputBoard"
+local precomputedInputCanvas = js.global.document:createElement "canvas"
+local precomputedOutputCanvas = js.global.document:createElement "canvas"
 local toolbar = js.global.document:getElementById "toolbar"
 
 local inputCtx = inputCanvas:getContext "2d"
 local outputCtx = outputCanvas:getContext "2d"
+local precomputedInputCtx = precomputedInputCanvas:getContext "2d"
+local precomputedOutputCtx = precomputedOutputCanvas:getContext "2d"
 
-inputCanvas.width = CANVAS_SIDE_LEN
-inputCanvas.height = CANVAS_SIDE_LEN
-outputCanvas.width = CANVAS_SIDE_LEN
-outputCanvas.height = CANVAS_SIDE_LEN
+local function setCanvasSizes(canvas)
+    canvas.width = CANVAS_SIDE_LEN
+    canvas.height = CANVAS_SIDE_LEN
+end
+setCanvasSizes(inputCanvas)
+setCanvasSizes(outputCanvas)
+setCanvasSizes(precomputedInputCanvas)
+setCanvasSizes(precomputedOutputCanvas)
 
 local inputBounds = Bounds.new(
     im(INPUT_MIN[1], INPUT_MIN[2]),
@@ -45,8 +53,6 @@ local outputAxes = Axes(outputBounds, outputCanvas, outputCtx)
 local inputSquiggles = {}
 ---@type ComplexPath[]
 local outputSquiggles = {}
-
--- TODO: break path at discontinuities
 
 local lineWidth = BASE_PATH_THICKNESS
 js.global.document:getElementById "strokeWidth".value = tostring(lineWidth)
@@ -126,7 +132,7 @@ local function calculateFuncAndThickness(c)
     ---@type Complex
     local fc = func:evaluate(c)
     local dz = func:derivative():evaluate(c):abs()
-    local originalThickness = currentInputSquiggle():endThickness() * OUTPUT_AREA / INPUT_AREA
+    local originalThickness = lineWidth * OUTPUT_AREA / INPUT_AREA
     return fc, originalThickness * dz
 end
 
@@ -143,6 +149,18 @@ local function shouldCreateNewMousePoint(x, y)
     return math.sqrt((x-lastMouseX)^2 + (y-lastMouseY)^2) > MIN_PIXEL_DIST_FOR_NEW_POINT
 end
 
+local function pushPointPair(inputPoint, outputPoint, outputThickness, discontinuity)
+    currentInputSquiggle():pushPoint(inputPoint)
+    currentInputSquiggle():drawLastAddedSegment(precomputedInputCtx, inputBounds)
+
+    if not outputPoint or not outputThickness then
+        outputPoint, outputThickness = calculateFuncAndThickness(inputPoint)
+    end
+    -- print(inputPoint, '->', outputPoint)
+    currentOutputSquiggle():pushPoint(outputPoint, outputThickness, discontinuity)
+    currentOutputSquiggle():drawLastAddedSegment(precomputedOutputCtx, outputBounds)
+end
+
 -- FIXME: update this when user zooms out
 local maxTolerableDistanceForInterp = outputBounds:pixelsToMeasurement(MAX_PIXEL_DISTANCE_BEFORE_INTERP)
 local function recursivelyPushPointsIfNeeded(depth, targetInputPoint, targetOutputPoint, endThickness)
@@ -153,8 +171,7 @@ local function recursivelyPushPointsIfNeeded(depth, targetInputPoint, targetOutp
     local interpStart = currentInputSquiggle():endPoint()
     local interpEnd = targetInputPoint
     if dist >= MAX_PIXEL_DISTANCE_BEFORE_DISCONTINUITY then
-        currentInputSquiggle():pushPoint(targetInputPoint)
-        currentOutputSquiggle():pushPoint(targetOutputPoint, endThickness, true)
+        pushPointPair(targetInputPoint, targetOutputPoint, endThickness, true)
     elseif dist >= maxTolerableDistanceForInterp and depth < MAX_INTERP_TRIES then
         for i = 1, INTERP_STEPS do
             local interpT = i / INTERP_STEPS
@@ -163,14 +180,12 @@ local function recursivelyPushPointsIfNeeded(depth, targetInputPoint, targetOutp
             recursivelyPushPointsIfNeeded(depth+1, interpPoint, interpF, interpThickness)
         end
     else
-        currentInputSquiggle():pushPoint(targetInputPoint)
-        currentOutputSquiggle():pushPoint(targetOutputPoint, endThickness)
+        pushPointPair(targetInputPoint, targetOutputPoint, endThickness, false)
     end
 end
 
 local function simplePushPoint(x, y, c)
-    currentInputSquiggle():pushPoint(c)
-    currentOutputSquiggle():pushPoint(calculateFuncAndThickness(c))
+    pushPointPair(c)
     lastMouseX, lastMouseY = x, y
     markDirty()
 end
@@ -186,8 +201,7 @@ local function pushComplexPoint(c, x, y, forceNewPoint)
         simplePushPoint(x, y, c)
     elseif shouldCreateNewMousePoint(x, y) then
         createNewMousePoint(x, y, c)
-    else
-        updateLastPoint(c)
+        simplePushPoint(x, y, c)
     end
 end
 
@@ -198,7 +212,12 @@ local function pushMousePoint(mouseEvent, forceNewPoint)
 
     local x, y = mouseEvent.clientX - inputCanvas.offsetLeft, mouseEvent.clientY -  inputCanvas.offsetTop
     local c = inputBounds:pixelToComplex(x, y)
-    pushComplexPoint(c, x, y, forceNewPoint)
+    if shouldCreateNewMousePoint(x, y) then
+        pushComplexPoint(c, x, y, forceNewPoint)
+    else
+        -- TODO: this call breaks the path into tiny insufferable and arrogant sausages
+        -- updateLastPoint(c)
+    end
 end
 
 local function drawGuides()
@@ -207,15 +226,26 @@ local function drawGuides()
 end
 drawGuides()
 
-function redraw()
+local function redrawOldPaths(canvas, ctx, paths, bounds)
+    ctx:clearRect(0, 0, canvas.width, canvas.height)
+    for _, squiggle in ipairs(paths) do
+        squiggle:draw(ctx, bounds)
+    end
+end
+
+function redraw(recalculateOldPaths)
     inputCtx:clearRect(0, 0, inputCanvas.width, inputCanvas.height)
     outputCtx:clearRect(0, 0, outputCanvas.width, outputCanvas.height)
     drawGuides()
-    for _, squiggle in ipairs(inputSquiggles) do
-        squiggle:draw(inputCtx, inputBounds)
+    if recalculateOldPaths then
+        redrawOldPaths(precomputedInputCanvas, precomputedInputCtx, inputSquiggles, inputBounds)
+        redrawOldPaths(precomputedOutputCanvas, precomputedOutputCtx, outputSquiggles, outputBounds)
     end
-    for _, squiggle in ipairs(outputSquiggles) do
-        squiggle:draw(outputCtx, outputBounds)
+    inputCtx:drawImage(precomputedInputCanvas, 0, 0)
+    outputCtx:drawImage(precomputedOutputCanvas, 0, 0)
+    if userDrawing then
+        currentInputSquiggle():drawLastAddedSegment(inputCtx, inputBounds)
+        currentOutputSquiggle():drawLastAddedSegment(outputCtx, outputBounds)
     end
     shouldRedraw = false
 end
@@ -251,7 +281,7 @@ local function fullyRecalculate()
         finishPath()
     end
     lockUserInput = false
-    redraw()
+    redraw(true)
 end
 
 local function updateFunc()
@@ -274,6 +304,8 @@ updateFunc()
 
 toolbar:addEventListener("click", function(_, event)
     if event.target.id == "clear" then
+        precomputedInputCtx:clearRect(0, 0, precomputedInputCanvas.width, precomputedInputCanvas.height)
+        precomputedOutputCtx:clearRect(0, 0, precomputedOutputCanvas.width, precomputedOutputCanvas.height)
         inputCtx:clearRect(0, 0, inputCanvas.width, inputCanvas.height)
         outputCtx:clearRect(0, 0, outputCanvas.width, outputCanvas.height)
         inputSquiggles = {}
@@ -282,9 +314,8 @@ toolbar:addEventListener("click", function(_, event)
     elseif event.target.id == "undo" then
         table.remove(inputSquiggles)
         table.remove(outputSquiggles)
-        redraw()
-    elseif event.target.id == "redraw" then
-        redraw()
+        -- TODO: also keep history of precomputed canvases to make undo instant
+        redraw(true)
     end
 end)
 
