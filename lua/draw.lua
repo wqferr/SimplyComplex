@@ -263,11 +263,13 @@ local function startPath(mode, arg, color, thickness)
 end
 
 local function finishPath()
-    local startX, startY = inputBounds:complexToPixel(currentInputSquiggle():startPoint())
-    local endX, endY = inputBounds:complexToPixel(currentInputSquiggle():endPoint())
-    local dist = pixelDist(startX, startY, endX, endY)
-    if dist <= CLOSE_PATH_DIST then
-        pushComplexPoint(currentInputSquiggle():startPoint(), nil, nil, true)
+    if currentInputSquiggle() then
+        local startX, startY = inputBounds:complexToPixel(currentInputSquiggle():startPoint())
+        local endX, endY = inputBounds:complexToPixel(currentInputSquiggle():endPoint())
+        local dist = pixelDist(startX, startY, endX, endY)
+        if dist <= CLOSE_PATH_DIST then
+            pushComplexPoint(currentInputSquiggle():startPoint(), nil, nil, true)
+        end
     end
     userDrawing = false
 end
