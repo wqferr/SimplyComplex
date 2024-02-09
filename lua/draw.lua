@@ -55,8 +55,11 @@ local inputSquiggles = {}
 local outputSquiggles = {}
 
 local lineWidth = BASE_PATH_THICKNESS
-js.global.document:getElementById "strokeWidth".value = tostring(lineWidth)
-local strokeStyle = js.global.document:getElementById "strokeColor".value
+
+local lineWidthComponent = js.global.document:getElementById "strokeWidth"
+lineWidthComponent.value = tostring(lineWidth)
+local strokeStyleComponent = js.global.document:getElementById "strokeColor"
+local strokeStyle = strokeStyleComponent.color
 
 local funcTextField = js.global.document:getElementById "func"
 local func
@@ -136,11 +139,11 @@ local function calculateFuncAndThickness(c)
     return fc, originalThickness * dz
 end
 
-local function updateLastPoint(c)
-    currentInputSquiggle():updateLastPoint(c)
-    currentOutputSquiggle():updateLastPoint(calculateFuncAndThickness(c))
-    markDirty()
-end
+-- local function updateLastPoint(c)
+--     currentInputSquiggle():updateLastPoint(c)
+--     currentOutputSquiggle():updateLastPoint(calculateFuncAndThickness(c))
+--     markDirty()
+-- end
 
 local function shouldCreateNewMousePoint(x, y)
     if not lastMouseX or not lastMouseY then
@@ -161,7 +164,7 @@ local function pushPointPair(inputPoint, outputPoint, outputThickness, discontin
     currentOutputSquiggle():drawLastAddedSegment(precomputedOutputCtx, outputBounds)
 end
 
--- FIXME: update this when user zooms out
+-- FIXME: update this when user zooms in or out
 local maxTolerableDistanceForInterp = outputBounds:pixelsToMeasurement(MAX_PIXEL_DISTANCE_BEFORE_INTERP)
 local function recursivelyPushPointsIfNeeded(depth, targetInputPoint, targetOutputPoint, endThickness)
     if not targetOutputPoint or not endThickness then
@@ -172,7 +175,7 @@ local function recursivelyPushPointsIfNeeded(depth, targetInputPoint, targetOutp
     local interpEnd = targetInputPoint
     if dist >= MAX_PIXEL_DISTANCE_BEFORE_DISCONTINUITY then
         pushPointPair(targetInputPoint, targetOutputPoint, endThickness, true)
-    elseif dist >= maxTolerableDistanceForInterp and depth < MAX_INTERP_TRIES then
+    elseif dist >= maxTolerableDistanceForInterp and depth <= MAX_INTERP_TRIES then
         for i = 1, INTERP_STEPS do
             local interpT = i / INTERP_STEPS
             local interpPoint = (1-interpT) * interpStart + interpT * interpEnd
@@ -212,12 +215,7 @@ local function pushMousePoint(mouseEvent, forceNewPoint)
 
     local x, y = mouseEvent.clientX - inputCanvas.offsetLeft, mouseEvent.clientY -  inputCanvas.offsetTop
     local c = inputBounds:pixelToComplex(x, y)
-    if shouldCreateNewMousePoint(x, y) then
-        pushComplexPoint(c, x, y, forceNewPoint)
-    else
-        -- TODO: this call breaks the path into tiny insufferable and arrogant sausages
-        -- updateLastPoint(c)
-    end
+    pushComplexPoint(c, x, y, forceNewPoint)
 end
 
 local function drawGuides()
@@ -243,10 +241,6 @@ function redraw(recalculateOldPaths)
     end
     inputCtx:drawImage(precomputedInputCanvas, 0, 0)
     outputCtx:drawImage(precomputedOutputCanvas, 0, 0)
-    if userDrawing then
-        currentInputSquiggle():drawLastAddedSegment(inputCtx, inputBounds)
-        currentOutputSquiggle():drawLastAddedSegment(outputCtx, outputBounds)
-    end
     shouldRedraw = false
 end
 
@@ -257,7 +251,7 @@ local function startPath(mode, arg, color, thickness)
     table.insert(outputSquiggles, CPath.new(color, thickness, MAX_PATH_THICKNESS))
     if mode == "user" then
         pushMousePoint(arg, true)
-        -- twice, for end point manipulation
+        -- for single dots to show immediately
         pushMousePoint(arg, true)
     else
         pushComplexPoint(arg, nil, nil, true)
@@ -319,22 +313,23 @@ toolbar:addEventListener("click", function(_, event)
     end
 end)
 
-toolbar:addEventListener("input", function(_, event)
-    if event.target.id == "strokeColor" then
-        strokeStyle = event.target.value
-    elseif event.target.id == "strokeWidth" then
-        lineWidth = tonumber(event.target.value) or BASE_PATH_THICKNESS
-    end
+lineWidthComponent:addEventListener("input", function(_, event)
+    lineWidth = tonumber(event.target.value) or BASE_PATH_THICKNESS
+end)
+
+strokeStyleComponent:addEventListener("change", function(_, event)
+    strokeStyle = event.target.hex
 end)
 
 inputCanvas:addEventListener("mousedown", function(_, event)
     startPath("user", event, strokeStyle, lineWidth)
 end)
 
-local function userFinishPath()
+local function userFinishPath(_, mouseEvent)
     if lockUserInput then
         return
     end
+    pushMousePoint(mouseEvent, true)
     finishPath()
 end
 inputCanvas:addEventListener("mouseup", userFinishPath)
