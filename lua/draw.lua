@@ -145,11 +145,15 @@ end
 --     markDirty()
 -- end
 
+local function pixelDist(x1, y1, x2, y2)
+    return math.sqrt((x1 - x2)^2 + (y1 - y2)^2)
+end
+
 local function shouldCreateNewMousePoint(x, y)
     if not lastMouseX or not lastMouseY then
         return true
     end
-    return math.sqrt((x-lastMouseX)^2 + (y-lastMouseY)^2) > MIN_PIXEL_DIST_FOR_NEW_POINT
+    return pixelDist(x, lastMouseX, y, lastMouseY) > MIN_PIXEL_DIST_FOR_NEW_POINT
 end
 
 local function pushPointPair(inputPoint, outputPoint, outputThickness, discontinuity)
@@ -259,6 +263,12 @@ local function startPath(mode, arg, color, thickness)
 end
 
 local function finishPath()
+    local startX, startY = inputBounds:complexToPixel(currentInputSquiggle():startPoint())
+    local endX, endY = inputBounds:complexToPixel(currentInputSquiggle():endPoint())
+    local dist = pixelDist(startX, startY, endX, endY)
+    if dist <= CLOSE_PATH_DIST then
+        pushComplexPoint(currentInputSquiggle():startPoint(), nil, nil, true)
+    end
     userDrawing = false
 end
 
