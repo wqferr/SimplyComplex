@@ -1,38 +1,42 @@
 body {
     margin: 0;
     padding: 0;
-    height: 100%;
-    width: 100%;
+    height: 100vh;
     overflow: hidden;
-    color: white;
 }
 
-/* h1 { */
-/*     background: #7f7fd5; */
-/*     background: -webkit-linear-gradient(to right, #91eae4, #86a8e7, #7f7fd5); */
-/*     background: linear-gradient(to right, #91eae4, #86a8e7, #7f7fd5); */
-/*     background-clip: text; */
-/*     -webkit-backdrop-clip: text; */
-/*     -webkit-text-fill-color: transparent; */
-/* } */
-
-.drawing-board-container {
+#main {
     height: 100%;
-    width: 100%;
     display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: stretch;
+}
+
+#boards {
+    display: flex;
+    flex-grow: 1;
+    flex-basis: 300px;
+    justify-content: center;
+    align-items: stretch;
+}
+
+.board-container {
+    flex-grow: 1;
+    width: 100%;
+}
+
+#arrowdiv {
+    display: flex;
+    flex-direction: column;
     justify-content: space-around;
+    margin: 10px 30px;
 }
 
-canvas {
-    /* border: black 1px solid; */
-}
-
-#inputBoard {
-    display: inline-block;
-}
-
-#outputBoard {
-    float: right;
+#funcform {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
 }
 
 #toolbar {

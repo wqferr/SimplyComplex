@@ -23,14 +23,24 @@ local outputCtx = outputCanvas:getContext "2d"
 local precomputedInputCtx = precomputedInputCanvas:getContext "2d"
 local precomputedOutputCtx = precomputedOutputCanvas:getContext "2d"
 
-local function setCanvasSizes(canvas)
-    canvas.width = CANVAS_SIDE_LEN
-    canvas.height = CANVAS_SIDE_LEN
+local function setCanvasSize(canvas)
+    local style = js.global:getComputedStyle(canvas.parentNode)
+    local width = style:getPropertyValue "width":gsub("px", "")
+    local height = style:getPropertyValue "height":gsub("px", "")
+    width = math.floor(math.min(tonumber(width) or 0, tonumber(height) or 0))
+    print(width)
+    canvas.width = width
+    canvas.height = width
 end
-setCanvasSizes(inputCanvas)
-setCanvasSizes(outputCanvas)
-setCanvasSizes(precomputedInputCanvas)
-setCanvasSizes(precomputedOutputCanvas)
+
+local function copyCanvasSize(from, to)
+    to.width = from.width
+    to.height = from.height
+end
+setCanvasSize(inputCanvas)
+copyCanvasSize(inputCanvas, outputCanvas)
+copyCanvasSize(inputCanvas, precomputedInputCanvas)
+copyCanvasSize(outputCanvas, precomputedOutputCanvas)
 
 local inputBounds = Bounds.new(
     im(INPUT_MIN[1], INPUT_MIN[2]),
@@ -61,6 +71,8 @@ lineWidthComponent.value = tostring(lineWidth)
 local strokeStyleComponent = js.global.document:getElementById "strokeColor"
 local strokeStyle = strokeStyleComponent.color
 
+-- TODO: use [mathquill](https://github.com/mathquill/mathquill) instead of a raw text field.
+-- this will require parsing latex into a lua expression, which shouldnt be too bad
 local funcTextField = js.global.document:getElementById "func"
 local func
 local shouldRedraw

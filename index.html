@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="style/style.css">
     <link rel="stylesheet" href="style/normalize.css">
+    <link rel="stylesheet" href="style/style.css">
     <title>Simply Complex</title>
     <script src="fengari-web.js" type="text/javascript" async></script>
 </head>
 <body>
-    <section class="container">
+    <div id="main">
         <div id="toolbar">
             <label for="strokeColor">Stroke Color</label>
             <toolcool-color-picker color="#e44444" button-width="2rem" button-height="2rem" id="strokeColor"></toolcool-color-picker>
@@ -18,13 +18,21 @@
             <button id="clear">Clear</button>
             <button id="undo">Undo</button>
         </div>
-        <div class="drawing-board-container">
-            <canvas id="inputBoard"></canvas>
-            <canvas id="outputBoard"></canvas>
+        <div id="boards">
+            <div class="board-container">
+                <canvas id="inputBoard"></canvas>
+            </div>
+            <div id="arrowdiv">
+                <div id="funcform">
+                    <label for="func">𝑓(𝑧)&nbsp;=&nbsp;</label>
+                    <input type="text" name="func" id="func">
+                </div>
+            </div>
+            <div class="board-container">
+                <canvas id="outputBoard"></canvas>
+            </div>
         </div>
-        <!-- TODO: align text to the right -->
-        <input type="text" id="func">
-    </section>
+    </div>
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toolcool-color-picker/dist/toolcool-color-picker.min.js"></script>
     <script type="application/lua" src="lua/draw.lua" async></script>
 </body>
