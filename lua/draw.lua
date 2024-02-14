@@ -82,6 +82,8 @@ local exportedValues = {
     z = z,
     i = sd.const(im.i),
     e = sd.const(math.exp(1)),
+    pi = sd.const(math.pi),
+    tau = sd.const(2*math.pi),
     real = sd.real,
     imag = sd.imag,
     exp = sd.exp,
@@ -305,14 +307,18 @@ end
 local function updateFunc()
     local newFunc, reason = loadFunc(funcTextField.value)
     if newFunc then
-        func = newFunc
-        if type(func) == "number" then
-            func = im.asComplex(func)
+        if type(newFunc) == "number" then
+            newFunc = im.asComplex(newFunc)
         end
-        if im.isComplex(func) then
-            func = sd.const(func)
+        if im.isComplex(newFunc) then
+            newFunc = sd.const(newFunc)
         end
-        fullyRecalculate()
+        if sd.isExpression(newFunc) then
+            func = newFunc
+            fullyRecalculate()
+        else
+            print("Incomplete expression")
+        end
     else
         print(reason)
     end

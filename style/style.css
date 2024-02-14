@@ -1,12 +1,20 @@
 body {
     margin: 0;
     padding: 0;
-    height: 100vh;
     overflow: hidden;
 }
 
-#main {
-    height: 100%;
+header {
+    height: 5vh;
+    background-color: #a0a0f0
+}
+
+header > h1 {
+    margin-top: 0;
+}
+
+#app {
+    height: 95vh;
     display: flex;
     flex-direction: column;
     justify-content: center;
