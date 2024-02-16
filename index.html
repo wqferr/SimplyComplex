@@ -6,7 +6,7 @@
     <link rel="stylesheet" href="style/normalize.css">
     <link rel="stylesheet" href="style/style.css">
     <title>Simply Complex</title>
-    <script src="fengari-web.js" type="text/javascript" async></script>
+    <script src="js/fengari-web.js" type="text/javascript" async></script>
 </head>
 <body>
     <header>
@@ -25,10 +25,14 @@
             <div class="board-container">
                 <canvas id="inputBoard"></canvas>
             </div>
-            <div id="arrowdiv">
+            <div id="arrowparent">
                 <div id="funcform">
                     <label for="func">𝑓(𝑧)&nbsp;=&nbsp;</label>
                     <input type="text" name="func" id="func">
+                </div>
+                <div id="arrow">
+                    <!-- ↦ -->
+                    <canvas id="arrowCanvas"></canvas>
                 </div>
             </div>
             <div class="board-container">
@@ -38,5 +42,6 @@
     </div>
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toolcool-color-picker/dist/toolcool-color-picker.min.js"></script>
     <script type="application/lua" src="lua/draw.lua" async></script>
+    <script type="application/lua" src="lua/arrow.lua" async></script>
 </body>
 </html>

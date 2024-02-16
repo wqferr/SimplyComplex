@@ -31,13 +31,13 @@ header > h1 {
 
 .board-container {
     flex-grow: 1;
-    width: 100%;
 }
 
-#arrowdiv {
+#arrowparent {
     display: flex;
     flex-direction: column;
-    justify-content: space-around;
+    justify-content: center;
+    align-items: center;
     margin: 10px 30px;
 }
 
@@ -45,6 +45,11 @@ header > h1 {
     display: flex;
     flex-direction: row;
     justify-content: center;
+}
+
+#arrow {
+    /* this was for when this was a mapsto character */
+    /* font-size: 10vw; */
 }
 
 #toolbar {

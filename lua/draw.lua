@@ -11,6 +11,7 @@ local Axes = require "axes"
 require "constants"
 require "im-sd-bridge"
 
+-- TODO: add actual line smoothing to input
 
 local inputCanvas = js.global.document:getElementById "inputBoard"
 local outputCanvas = js.global.document:getElementById "outputBoard"
@@ -271,8 +272,10 @@ local function startPath(mode, arg, color, thickness)
         pushMousePoint(arg, true)
         -- for single dots to show immediately
         pushMousePoint(arg, true)
-    else
+    elseif mode == "prog" then
         pushComplexPoint(arg, nil, nil, true)
+    else
+        error("Unknown startPath mode: " .. tostring(mode))
     end
 end
 
@@ -338,7 +341,6 @@ toolbar:addEventListener("click", function(_, event)
     elseif event.target.id == "undo" then
         table.remove(inputSquiggles)
         table.remove(outputSquiggles)
-        -- TODO: also keep history of precomputed canvases to make undo instant
         redraw(true)
     end
 end)

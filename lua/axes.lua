@@ -42,7 +42,6 @@ function Axes:draw()
     self.ctx:moveTo(x0 + 0.5, 0)
     self.ctx:lineTo(x0 + 0.5, lrY)
     self.ctx:stroke()
-    -- TODO: arrows at tips?
 
     local delta = 1
 
