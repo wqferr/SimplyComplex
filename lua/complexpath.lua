@@ -87,6 +87,12 @@ function ComplexPath:endPoint()
     return self.points[#self.points].point
 end
 
+---Check whether this path has any points
+---@return boolean
+function ComplexPath:hasPoints()
+    return #self.points > 0
+end
+
 ---Draw the last segment in the Path
 ---@param ctx Context2D Drawing context
 ---@param bounds Bounds Bounds of the canvas

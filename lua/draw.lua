@@ -153,12 +153,6 @@ local function calculateFuncAndThickness(c)
     return fc, originalThickness * dz
 end
 
--- local function updateLastPoint(c)
---     currentInputSquiggle():updateLastPoint(c)
---     currentOutputSquiggle():updateLastPoint(calculateFuncAndThickness(c))
---     markDirty()
--- end
-
 local function pixelDist(x1, y1, x2, y2)
     return math.sqrt((x1 - x2)^2 + (y1 - y2)^2)
 end
@@ -177,7 +171,6 @@ local function pushPointPair(inputPoint, outputPoint, outputThickness, discontin
     if not outputPoint or not outputThickness then
         outputPoint, outputThickness = calculateFuncAndThickness(inputPoint)
     end
-    -- print(inputPoint, '->', outputPoint)
     currentOutputSquiggle():pushPoint(outputPoint, outputThickness, discontinuity)
     currentOutputSquiggle():drawLastAddedSegment(precomputedOutputCtx, outputBounds)
 end
@@ -188,6 +181,11 @@ local function recursivelyPushPointsIfNeeded(depth, targetInputPoint, targetOutp
     if not targetOutputPoint or not endThickness then
         targetOutputPoint, endThickness = calculateFuncAndThickness(targetInputPoint)
     end
+    if not currentOutputSquiggle():hasPoints() then
+        pushPointPair(targetInputPoint, targetOutputPoint, endThickness, false)
+        return
+    end
+
     local dist = (targetOutputPoint - currentOutputSquiggle():endPoint()):abs()
     local interpStart = currentInputSquiggle():endPoint()
     local interpEnd = targetInputPoint
@@ -226,12 +224,21 @@ local function pushComplexPoint(c, x, y, forceNewPoint)
     end
 end
 
-local function pushMousePoint(mouseEvent, forceNewPoint)
+local function getEventCoords(event)
+    if event.clientX then
+        return event.clientX, event.clientY
+    else
+        -- TODO: multiple touches?
+        return event.touches[0].clientX, event.touches[0].clientY
+    end
+end
+local function pushMousePoint(event, forceNewPoint)
     if not userDrawing then
         return
     end
 
-    local x, y = mouseEvent.clientX - inputCanvas.offsetLeft, mouseEvent.clientY -  inputCanvas.offsetTop
+    local x, y = getEventCoords(event)
+    x, y = x - inputCanvas.offsetLeft, y -  inputCanvas.offsetTop
     local c = inputBounds:pixelToComplex(x, y)
     pushComplexPoint(c, x, y, forceNewPoint)
 end
@@ -352,9 +359,11 @@ strokeStyleComponent:addEventListener("change", function(_, event)
     strokeStyle = event.target.hex
 end)
 
-inputCanvas:addEventListener("mousedown", function(_, event)
+local function userStartPath(_, event)
     startPath("user", event, strokeStyle, lineWidth)
-end)
+end
+inputCanvas:addEventListener("touchstart", userStartPath, {passive = false})
+inputCanvas:addEventListener("mousedown", userStartPath)
 
 local function userFinishPath(_, mouseEvent)
     if lockUserInput then
@@ -364,16 +373,19 @@ local function userFinishPath(_, mouseEvent)
     finishPath()
 end
 inputCanvas:addEventListener("mouseup", userFinishPath)
+inputCanvas:addEventListener("touchend", userFinishPath)
 inputCanvas:addEventListener("mouseout", userFinishPath)
 
 -- TODO: add coordinates of mouse to some part of the UI
-inputCanvas:addEventListener("mousemove", function(_, event)
+local function cursorMove(_, event)
     if not userDrawing or lockUserInput then
         return
     end
 
     pushMousePoint(event)
-end)
+end
+inputCanvas:addEventListener("mousemove", cursorMove)
+inputCanvas:addEventListener("touchmove", cursorMove)
 
 local function functTextInputChange()
     if lockUserInput then
