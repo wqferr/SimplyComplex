@@ -29,7 +29,6 @@ local function setCanvasSize(canvas)
     local width = style:getPropertyValue "width":gsub("px", "")
     local height = style:getPropertyValue "height":gsub("px", "")
     width = math.floor(math.min(tonumber(width) or 0, tonumber(height) or 0))
-    print(width)
     canvas.width = width
     canvas.height = width
 end
@@ -168,7 +167,7 @@ local function shouldCreateNewMousePoint(x, y)
     if not lastMouseX or not lastMouseY then
         return true
     end
-    return pixelDist(x, lastMouseX, y, lastMouseY) > MIN_PIXEL_DIST_FOR_NEW_POINT
+    return pixelDist(x, y, lastMouseX, lastMouseY) > MIN_PIXEL_DIST_FOR_NEW_POINT
 end
 
 local function pushPointPair(inputPoint, outputPoint, outputThickness, discontinuity)
