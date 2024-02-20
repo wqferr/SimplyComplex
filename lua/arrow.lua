@@ -4,7 +4,7 @@ local arrowCtx = arrowCanvas:getContext "2d"
 local canvasLength = arrowCanvas.width
 local canvasBreadth = arrowCanvas.height
 
-local MARGIN_FRAC = 0.2
+local MARGIN_FRAC = 0.1
 
 local function getCanvasDimensions()
     local dim = arrowCanvas:getBoundingClientRect()

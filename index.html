@@ -13,16 +13,14 @@
         <h1>HEADER!</h1>
     </header>
     <div id="app">
-        <div id="toolbar">
-            <label for="strokeColor">Stroke Color</label>
-            <toolcool-color-picker color="#e44444" button-width="2rem" button-height="2rem" id="strokeColor"></toolcool-color-picker>
-            <label for="strokeWidth">Stroke Width</label>
-            <input type="number" name="strokeWidth" id="strokeWidth" value="5">
-            <button id="clear">Clear</button>
-            <button id="undo">Undo</button>
-        </div>
         <div id="boards">
             <div class="board-container">
+                <div id="toolbar">
+                    <toolcool-color-picker color="#e44444" button-width="2rem" button-height="2rem" id="strokeColor"></toolcool-color-picker>
+                    <input type="number" name="strokeWidth" id="strokeWidth" value="5">
+                    <button id="clear" class="toolbar-button"></button>
+                    <button id="undo" class="toolbar-button"></button>
+                </div>
                 <canvas id="inputBoard"></canvas>
             </div>
             <div id="arrowParent">
@@ -35,6 +33,9 @@
                 </div>
             </div>
             <div class="board-container">
+                <div id="outputToolbar">
+                    <button id="dummyButtonSoCanvasesAlign" class="toolbar-button hidden"></button>
+                </div>
                 <canvas id="outputBoard"></canvas>
             </div>
         </div>

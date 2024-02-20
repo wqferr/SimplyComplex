@@ -18,6 +18,7 @@ local outputCanvas = js.global.document:getElementById "outputBoard"
 local precomputedInputCanvas = js.global.document:createElement "canvas"
 local precomputedOutputCanvas = js.global.document:createElement "canvas"
 local toolbar = js.global.document:getElementById "toolbar"
+local outputToolbar = js.global.document:getElementById "outputToolbar"
 
 local inputCtx = inputCanvas:getContext "2d"
 local outputCtx = outputCanvas:getContext "2d"
@@ -41,6 +42,11 @@ setCanvasSize(inputCanvas)
 copyCanvasSize(inputCanvas, outputCanvas)
 copyCanvasSize(inputCanvas, precomputedInputCanvas)
 copyCanvasSize(outputCanvas, precomputedOutputCanvas)
+
+-- do -- copy toolbar height
+--     local dim = toolbar:getBoundingClientRect()
+--     outputToolbar:setAttribute("style", ("display:block;height:%dpx;"):format(dim.height))
+-- end
 
 local inputBounds = Bounds.new(
     im(INPUT_MIN[1], INPUT_MIN[2]),
