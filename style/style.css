@@ -63,15 +63,37 @@ header > h1 {
     display: flex;
 }
 
+.toolbar {
+    margin-bottom: 5px;
+}
+
 .toolbar-button {
     width: 2rem;
     height: 2rem;
     background-size: cover;
     border-radius: 5px;
+    cursor: pointer;
 }
 
 .hidden {
     visibility: hidden;
+}
+
+#penSizeButtons {
+    list-style-type: none;
+    display: flex;
+    margin: 0 1rem;
+    padding: 0;
+    align-items: flex-start;
+}
+
+#penSizeButtons button {
+    padding: 0;
+}
+
+#penSizeButtons canvas {
+    width: 100%;
+    height: 100%;
 }
 
 #clear {

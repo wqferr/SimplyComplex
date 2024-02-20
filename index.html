@@ -12,12 +12,17 @@
     <header>
         <h1>HEADER!</h1>
     </header>
+
     <div id="app">
         <div id="boards">
             <div class="board-container">
-                <div id="toolbar">
+                <div id="toolbar" class="toolbar">
                     <toolcool-color-picker color="#e44444" button-width="2rem" button-height="2rem" id="strokeColor"></toolcool-color-picker>
-                    <input type="number" name="strokeWidth" id="strokeWidth" value="5">
+                    <div id="penSizeButtons">
+                        <button class="toolbar-button" id="smallPen" value="3"><canvas></canvas></button>
+                        <button class="toolbar-button" id="medPen" value="5"><canvas></canvas></button>
+                        <button class="toolbar-button" id="largePen" value="8"><canvas></canvas></button>
+                    </div>
                     <button id="clear" class="toolbar-button"></button>
                     <button id="undo" class="toolbar-button"></button>
                 </div>
@@ -33,13 +38,15 @@
                 </div>
             </div>
             <div class="board-container">
-                <div id="outputToolbar">
+                <div id="outputToolbar" class="toolbar">
                     <button id="dummyButtonSoCanvasesAlign" class="toolbar-button hidden"></button>
                 </div>
                 <canvas id="outputBoard"></canvas>
             </div>
         </div>
     </div>
+    <!-- TODO: remove this input -->
+    <input type="number" name="strokeWidth" id="strokeWidth" value="5">
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toolcool-color-picker/dist/toolcool-color-picker.min.js"></script>
     <script type="application/lua" src="lua/draw.lua" async></script>
     <script type="application/lua" src="lua/arrow.lua" async></script>
