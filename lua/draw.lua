@@ -12,18 +12,20 @@ require "constants"
 require "im-sd-bridge"
 
 -- TODO: add actual line smoothing to input
+local document = js.global.document
 
-local inputCanvas = js.global.document:getElementById "inputBoard"
-local outputCanvas = js.global.document:getElementById "outputBoard"
-local precomputedInputCanvas = js.global.document:createElement "canvas"
-local precomputedOutputCanvas = js.global.document:createElement "canvas"
-local toolbar = js.global.document:getElementById "toolbar"
-local outputToolbar = js.global.document:getElementById "outputToolbar"
+local inputCanvas = document:getElementById "inputBoard"
+local outputCanvas = document:getElementById "outputBoard"
+local precomputedInputCanvas = document:createElement "canvas"
+local precomputedOutputCanvas = document:createElement "canvas"
+local toolbar = document:getElementById "toolbar"
 
 local inputCtx = inputCanvas:getContext "2d"
 local outputCtx = outputCanvas:getContext "2d"
 local precomputedInputCtx = precomputedInputCanvas:getContext "2d"
 local precomputedOutputCtx = precomputedOutputCanvas:getContext "2d"
+
+local penSizeButtons = document:getElementById "penSizeButtons"
 
 local function setCanvasSize(canvas)
     local style = js.global:getComputedStyle(canvas.parentNode)
@@ -42,11 +44,6 @@ setCanvasSize(inputCanvas)
 copyCanvasSize(inputCanvas, outputCanvas)
 copyCanvasSize(inputCanvas, precomputedInputCanvas)
 copyCanvasSize(outputCanvas, precomputedOutputCanvas)
-
--- do -- copy toolbar height
---     local dim = toolbar:getBoundingClientRect()
---     outputToolbar:setAttribute("style", ("display:block;height:%dpx;"):format(dim.height))
--- end
 
 local inputBounds = Bounds.new(
     im(INPUT_MIN[1], INPUT_MIN[2]),
@@ -70,16 +67,16 @@ local inputSquiggles = {}
 ---@type ComplexPath[]
 local outputSquiggles = {}
 
-local lineWidth = BASE_PATH_THICKNESS
+local lineWidth
 
-local lineWidthComponent = js.global.document:getElementById "strokeWidth"
-lineWidthComponent.value = tostring(lineWidth)
-local strokeStyleComponent = js.global.document:getElementById "strokeColor"
+-- local lineWidthComponent = js.global.document:getElementById "strokeWidth"
+-- lineWidthComponent.value = tostring(lineWidth)
+local strokeStyleComponent = document:getElementById "strokeColor"
 local strokeStyle = strokeStyleComponent.color
 
 -- TODO: use [mathquill](https://github.com/mathquill/mathquill) instead of a raw text field.
 -- this will require parsing latex into a lua expression, which shouldnt be too bad
-local funcTextField = js.global.document:getElementById "func"
+local funcTextField = document:getElementById "func"
 local func
 local shouldRedraw
 
@@ -357,9 +354,54 @@ toolbar:addEventListener("click", function(_, event)
     end
 end)
 
-lineWidthComponent:addEventListener("input", function(_, event)
-    lineWidth = tonumber(event.target.value) or BASE_PATH_THICKNESS
+local unselectedPenSizeColor = "#555"
+local selectedPenSizeColor = "#ddd"
+local function rerenderPenSizeCanvases()
+    local buttons = penSizeButtons.children
+    for i = 0, #buttons-1 do
+        local button = buttons[i]
+        local canvas = button.children[0]
+        print(canvas.width)
+        local ctx = canvas:getContext "2d"
+        local radius = tonumber(button.value)
+        local cx, cy = math.floor(canvas.width/2) + 0.5, math.floor(canvas.height/2) + 0.5
+        if button.value == tostring(lineWidth) then
+            ctx.fillStyle = unselectedPenSizeColor
+            ctx:fillRect(0, 0, canvas.width, canvas.height)
+            ctx.fillStyle = selectedPenSizeColor
+        else
+            ctx:clearRect(0, 0, canvas.width, canvas.height)
+            ctx.fillStyle = unselectedPenSizeColor
+        end
+        ctx:beginPath()
+        ctx:arc(cx, cy, radius, 0, 2*math.pi)
+        ctx:fill()
+    end
+end
+
+local function resizePenSizeCanvases()
+    local buttons = penSizeButtons.children
+    for i = 0, #buttons-1 do
+        local button = buttons[i]
+        local canvas = button.children[0]
+        local dim = button:getBoundingClientRect()
+        canvas.width, canvas.height = dim.width, dim.height
+    end
+end
+
+local function selectPenSize(_, button)
+    if not button.value then
+        return
+    end
+    lineWidth = tonumber(button.value)
+    rerenderPenSizeCanvases()
+end
+penSizeButtons:addEventListener("click", function(_, event)
+    -- event target is canvas element inside button
+    selectPenSize(_, event.target.parentElement)
 end)
+resizePenSizeCanvases()
+selectPenSize(_, penSizeButtons.children[1])
 
 strokeStyleComponent:addEventListener("change", function(_, event)
     strokeStyle = event.target.hex
