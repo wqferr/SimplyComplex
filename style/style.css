@@ -15,7 +15,7 @@ header > h1 {
 }
 
 #app {
-    height: 95vh;
+    height: 85vh;
     display: flex;
     flex-direction: column;
     justify-content: center;

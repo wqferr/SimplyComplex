@@ -23,10 +23,10 @@ end
 
 local axesIterTable = {
     -- dx/dy given in pixel coords
-    { direction = 1, dy = {0, -0.5} },
-    { direction = im.i, dx = {-1, 0.5} },
-    { direction = -1, dy = {0.5, 0.5} },
-    { direction = -im.i, dx = {1.5, 0} },
+    { direction = 1, dy = {-2.5, 0} },
+    { direction = im.i, dx = {-2.5, 0} },
+    { direction = -1, dy = {1.5, -1} },
+    { direction = -im.i, dx = {1.5, -1} },
 }
 function Axes:draw()
     local x0, y0 = centerPixels(self.bounds:complexToPixel(im(0, 0)))
@@ -66,9 +66,11 @@ function Axes:draw()
             if dx then
                 tickStartX, tickEndX = tickStartX + dx[1], tickEndX + dx[2]
                 tickStartY, tickEndY = centerPixels(tickStartY, tickEndY)
+                print(direction, tickStartX - tickEndX)
             elseif dy then
                 tickStartY, tickEndY = tickStartY + dy[1], tickEndY + dy[2]
                 tickStartX, tickEndX = centerPixels(tickStartX, tickEndX)
+                print(direction, tickStartY - tickEndY)
             end
             if tickStartX < 0 or tickStartY < 0 then
                 tickStartX, tickStartY = tickStartX + 1, tickStartY + 1
