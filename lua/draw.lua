@@ -12,6 +12,7 @@ require "constants"
 require "im-sd-bridge"
 
 -- TODO: add actual line smoothing to input
+-- TODO: use promises to fully recalculate so it doesnt hang
 local document = js.global.document
 
 local inputCanvas = document:getElementById "inputBoard"
@@ -361,7 +362,6 @@ local function rerenderPenSizeCanvases()
     for i = 0, #buttons-1 do
         local button = buttons[i]
         local canvas = button.children[0]
-        print(canvas.width)
         local ctx = canvas:getContext "2d"
         local radius = tonumber(button.value)
         local cx, cy = math.floor(canvas.width/2) + 0.5, math.floor(canvas.height/2) + 0.5

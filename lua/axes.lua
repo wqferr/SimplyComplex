@@ -66,11 +66,9 @@ function Axes:draw()
             if dx then
                 tickStartX, tickEndX = tickStartX + dx[1], tickEndX + dx[2]
                 tickStartY, tickEndY = centerPixels(tickStartY, tickEndY)
-                print(direction, tickStartX - tickEndX)
             elseif dy then
                 tickStartY, tickEndY = tickStartY + dy[1], tickEndY + dy[2]
                 tickStartX, tickEndX = centerPixels(tickStartX, tickEndX)
-                print(direction, tickStartY - tickEndY)
             end
             if tickStartX < 0 or tickStartY < 0 then
                 tickStartX, tickStartY = tickStartX + 1, tickStartY + 1

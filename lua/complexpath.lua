@@ -97,9 +97,6 @@ end
 ---@param ctx Context2D Drawing context
 ---@param bounds Bounds Bounds of the canvas
 function ComplexPath:drawLastAddedSegment(ctx, bounds)
-    -- if #self.points > 2 then
-    --     print(self.points[#self.points-2].point, "::->", self.points[#self.points-1].point, "->", self.points[#self.points].point)
-    -- end
     self:drawSegment(ctx, bounds, #self.points - 1)
 end
 
@@ -111,16 +108,19 @@ function ComplexPath:drawSegment(ctx, bounds, idx)
     if idx < 1 or idx >= #self.points or self.discontinuities[idx+1] then
         return
     end
-    ctx.lineWidth = self.points[idx].thickness
-    ctx.lineCap = "round"
-    ctx.strokeStyle = self.color
 
     local segmentStart = self.points[idx].point
     local segmentEnd = self.points[idx+1].point
-    ctx:beginPath()
-    ctx:moveTo(bounds:complexToPixel(segmentStart))
-    ctx:lineTo(bounds:complexToPixel(segmentEnd))
-    ctx:stroke()
+    if bounds:contains(segmentStart) or bounds:contains(segmentEnd) then
+        ctx.lineWidth = self.points[idx].thickness
+        ctx.lineCap = "round"
+        ctx.strokeStyle = self.color
+
+        ctx:beginPath()
+        ctx:moveTo(bounds:complexToPixel(segmentStart))
+        ctx:lineTo(bounds:complexToPixel(segmentEnd))
+        ctx:stroke()
+    end
 end
 
 function ComplexPath:endThickness()

@@ -40,7 +40,6 @@ local function setCanvasOrientation()
         canvasLength = arrowCanvas.width
         canvasBreadth = arrowCanvas.height
     else
-        print"B"
         arrowCtx:setTransform(0, 1, -1, 0, arrowCanvas.width, 0)
         canvasLength = arrowCanvas.height
         canvasBreadth = arrowCanvas.width
