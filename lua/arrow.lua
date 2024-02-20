@@ -4,6 +4,8 @@ local arrowCtx = arrowCanvas:getContext "2d"
 local canvasLength = arrowCanvas.width
 local canvasBreadth = arrowCanvas.height
 
+local THICKNESS = 1
+
 local MARGIN_FRAC = 0.1
 
 local function getCanvasDimensions()
@@ -52,7 +54,7 @@ local function drawMapsTo()
     arrowCtx:clearRect(0, 0, arrowCanvas.width, arrowCanvas.height)
     arrowCtx:restore()
 
-    arrowCtx.lineWidth = 3
+    arrowCtx.lineWidth = THICKNESS
     arrowCtx:beginPath()
 
     local baseX1, baseY1 = getFracPoint(MARGIN_FRAC, MARGIN_FRAC)

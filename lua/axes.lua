@@ -3,6 +3,8 @@ local M = {}
 local Axes = {}
 local AxesMt = {__index = Axes}
 
+local TICK_WIDTH = 5.5
+
 setmetatable(M, {
     __call = function(_, bounds, canvas, ctx)
         local axes = setmetatable({}, AxesMt)
@@ -15,7 +17,7 @@ setmetatable(M, {
 
 
 local function centerPixels(x, y)
-    return x - 0.5, y - 0.5
+    return math.floor(x) - 0.5, math.floor(y) - 0.5
     -- return x, y
 end
 
@@ -27,28 +29,28 @@ local axesIterTable = {
     { direction = -im.i, dx = {1.5, 0} },
 }
 function Axes:draw()
-    local x0, y0 = self.bounds:complexToPixel(im(0, 0))
-    local lrX, lrY = self.bounds:complexToPixel(self.bounds.lowerRight)
+    local x0, y0 = centerPixels(self.bounds:complexToPixel(im(0, 0)))
+    local lrX, lrY = centerPixels(self.bounds:complexToPixel(self.bounds.lowerRight))
 
     self.ctx:beginPath()
     self.ctx.strokeStyle = "#333333"
     self.ctx.lineWidth = 1
 
     -- x direction
-    self.ctx:moveTo(0, y0 + 0.5)
-    self.ctx:lineTo(lrX, y0 + 0.5)
+    self.ctx:moveTo(0, y0)
+    self.ctx:lineTo(lrX, y0)
 
     -- y direction
-    self.ctx:moveTo(x0 + 0.5, 0)
-    self.ctx:lineTo(x0 + 0.5, lrY)
+    self.ctx:moveTo(x0, 0)
+    self.ctx:lineTo(x0, lrY)
     self.ctx:stroke()
 
     local delta = 1
 
     -- displacement up and down from the axes (half the total length)
-    local tickSize = self.bounds:pixelsToMeasurement(5.5)
+    local tickSize = self.bounds:pixelsToMeasurement(TICK_WIDTH)
     self.ctx:beginPath()
-    for iter, iterParams in ipairs(axesIterTable) do
+    for _, iterParams in ipairs(axesIterTable) do
         local direction = iterParams.direction
         local currentTick = im.zero
         while self.bounds:contains(currentTick) do
