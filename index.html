@@ -10,43 +10,54 @@
 </head>
 <body>
     <header>
-        <h1>HEADER!</h1>
+        <h1>Simplyℂomplex</h1>
     </header>
 
-    <div id="app">
-        <div id="boards">
-            <div class="board-container">
-                <div id="toolbar" class="toolbar">
-                    <toolcool-color-picker color="#e44444" button-width="2rem" button-height="2rem" id="strokeColor"></toolcool-color-picker>
-                    <div id="penSizeButtons">
-                        <button class="toolbar-button" id="smallPen" value="3"><canvas></canvas></button>
-                        <button class="toolbar-button" id="medPen" value="5"><canvas></canvas></button>
-                        <button class="toolbar-button" id="largePen" value="8"><canvas></canvas></button>
+    <main>
+        <div id="app">
+            <div id="boards">
+                <div class="board-container">
+                    <div id="toolbar" class="toolbar">
+                        <toolcool-color-picker color="#e44444" button-width="2rem" button-height="2rem" id="strokeColor"></toolcool-color-picker>
+                        <div id="penSizeButtons">
+                            <button class="toolbar-button" id="smallPen" value="3"><canvas></canvas></button>
+                            <button class="toolbar-button" id="medPen" value="5"><canvas></canvas></button>
+                            <button class="toolbar-button" id="largePen" value="8"><canvas></canvas></button>
+                        </div>
+                        <button id="clear" class="toolbar-button"></button>
+                        <button id="undo" class="toolbar-button"></button>
                     </div>
-                    <button id="clear" class="toolbar-button"></button>
-                    <button id="undo" class="toolbar-button"></button>
+                    <canvas id="inputBoard"></canvas>
                 </div>
-                <canvas id="inputBoard"></canvas>
-            </div>
-            <div id="arrowParent">
-                <div id="funcForm">
-                    <label for="func">𝑓(𝑧)&nbsp;=&nbsp;</label>
-                    <input type="text" name="func" id="func">
+                <div id="arrowParent">
+                    <div id="funcForm">
+                        <label for="func">𝑓(𝑧)&nbsp;=&nbsp;</label>
+                        <input type="text" name="func" id="func">
+                    </div>
+                    <div id="arrow">
+                        <canvas id="arrowCanvas"></canvas>
+                    </div>
                 </div>
-                <div id="arrow">
-                    <canvas id="arrowCanvas"></canvas>
+                <div class="board-container">
+                    <div id="outputToolbar" class="toolbar">
+                        <button id="dummyButtonSoCanvasesAlign" class="toolbar-button hidden"></button>
+                    </div>
+                    <canvas id="outputBoard"></canvas>
                 </div>
-            </div>
-            <div class="board-container">
-                <div id="outputToolbar" class="toolbar">
-                    <button id="dummyButtonSoCanvasesAlign" class="toolbar-button hidden"></button>
-                </div>
-                <canvas id="outputBoard"></canvas>
             </div>
         </div>
-    </div>
-    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toolcool-color-picker/dist/toolcool-color-picker.min.js"></script>
-    <script type="application/lua" src="lua/draw.lua" async></script>
-    <script type="application/lua" src="lua/arrow.lua" async></script>
+        <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toolcool-color-picker/dist/toolcool-color-picker.min.js"></script>
+        <script type="application/lua" src="lua/draw.lua" async></script>
+        <script type="application/lua" src="lua/arrow.lua" async></script>
+
+        <div id="credits">
+            <ul>
+                <li><img id="poweredByLua" alt="Powered by Lua" src="img/powered-by-lua.png" /></li>
+                <li>Idea and implementation by <a href="https://github.com/wqferr" target="_blank" title="Check out my other projects on GitHub">William Quelho Ferreira</a> <span class="credits-mdash">&mdash;</span> wqferr@gmail.com</li>
+                <li>Toolbar UX by <a href="https://linktr.ee/anayagf" target="_blank" title="Check out her portfolio on linktr.ee">Anayã Gimenes Ferreira</a> <span class="credits-mdash">&mdash;</span> anayagimenes@gmail.com</li>
+                <li>JavaScript Lua VM by <a href="https://github.com/fengari-lua/fengari">Fengari project</a></li>
+            </ul>
+        </div>
+    </main>
 </body>
 </html>

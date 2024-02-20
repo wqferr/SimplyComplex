@@ -2,7 +2,6 @@
 body {
     margin: 0;
     padding: 0;
-    overflow: hidden;
 }
 
 header {
@@ -15,11 +14,24 @@ header > h1 {
 }
 
 #app {
-    height: 85vh;
+    height: 70vh;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: stretch;
+}
+
+#credits {
+    text-align: center;
+    height: 5vh;
+}
+
+#credits > ul {
+    list-style: none;
+}
+
+.credits-mdash {
+    margin: 0 2em;
 }
 
 #boards {
@@ -106,6 +118,15 @@ header > h1 {
 
 #outputToolbar {
     display: none;
+}
+
+header > h1 {
+    font-weight: normal;
+}
+
+#poweredByLua {
+    height: 64px;
+    margin-bottom: 1vh;
 }
 
 @media(min-width: 800px) {
