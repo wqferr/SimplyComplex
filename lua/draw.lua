@@ -158,7 +158,7 @@ local function calculateFuncAndThickness(c)
     ---@type Complex
     local fc = func:evaluate(c)
     local dz = func:derivative():evaluate(c):abs()
-    local originalThickness = lineWidth * OUTPUT_AREA / INPUT_AREA
+    local originalThickness = lineWidth * STROKE_WIDTH_SCALING_FACTOR
     return fc, originalThickness * dz
 end
 
