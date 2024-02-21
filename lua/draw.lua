@@ -212,7 +212,8 @@ local function recursivelyPushPointsIfNeeded(depth, targetInputPoint, targetOutp
             local interpF, interpThickness = calculateFuncAndThickness(interpPoint)
             table.insert(promises, recursivelyPushPointsIfNeeded(depth+1, interpPoint, interpF, interpThickness))
         end
-        -- TODO: make promises work in order!
+        -- FIXME: make promises work in order!
+        -- TODO: replace promises with coroutine calls
         return promises
     else
         return { pushPointPair(targetInputPoint, targetOutputPoint, endThickness, false) }
@@ -479,12 +480,10 @@ inputCanvas:addEventListener("mouseup", userFinishPath)
 inputCanvas:addEventListener("touchend", userFinishPath)
 inputCanvas:addEventListener("mouseout", userFinishPath)
 
--- TODO: add coordinates of mouse to some part of the UI
 local function cursorMove(_, event)
     markDirty()
     local mx, my = getEventCoords(event)
     mouseHoverOutputPoint = inputBounds:pixelToComplex(mx, my)
-    print(mouseHoverOutputPoint)
     mouseHoverOutputPoint = func:evaluate(mouseHoverOutputPoint)
     if not userDrawing or lockUserInput then
         return
