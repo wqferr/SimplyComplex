@@ -26,6 +26,8 @@ local outputCtx = outputCanvas:getContext "2d"
 local precomputedInputCtx = precomputedInputCanvas:getContext "2d"
 local precomputedOutputCtx = precomputedOutputCanvas:getContext "2d"
 
+local mouseHoverOutputPoint = nil
+
 local penSizeButtons = document:getElementById "penSizeButtons"
 
 local function setCanvasSize(canvas)
@@ -210,6 +212,7 @@ local function recursivelyPushPointsIfNeeded(depth, targetInputPoint, targetOutp
             local interpF, interpThickness = calculateFuncAndThickness(interpPoint)
             table.insert(promises, recursivelyPushPointsIfNeeded(depth+1, interpPoint, interpF, interpThickness))
         end
+        -- TODO: make promises work in order!
         return promises
     else
         return { pushPointPair(targetInputPoint, targetOutputPoint, endThickness, false) }
@@ -239,10 +242,10 @@ end
 
 local function getEventCoords(event)
     if event.clientX then
-        return event.clientX, event.clientY
+        return event.clientX - inputCanvas.offsetLeft, event.clientY - inputCanvas.offsetTop
     else
         -- TODO: multiple touches?
-        return event.touches[0].clientX, event.touches[0].clientY
+        return event.touches[0].clientX - inputCanvas.offsetLeft, event.touches[0].clientY - inputCanvas.offsetTop
     end
 end
 local function pushMousePoint(event, forceNewPoint)
@@ -251,7 +254,6 @@ local function pushMousePoint(event, forceNewPoint)
     end
 
     local x, y = getEventCoords(event)
-    x, y = x - inputCanvas.offsetLeft, y -  inputCanvas.offsetTop
     local c = inputBounds:pixelToComplex(x, y)
     pushComplexPoint(c, x, y, forceNewPoint)
 end
@@ -269,6 +271,23 @@ local function redrawOldPaths(canvas, ctx, paths, bounds)
     end
 end
 
+local function drawOutputCursor()
+    if not mouseHoverOutputPoint or tostring(mouseHoverOutputPoint) == "nan" then
+        return
+    end
+    local x, y = outputBounds:complexToPixel(mouseHoverOutputPoint)
+    x, y = 0.5 + math.floor(x), 0.5 + math.floor(y)
+    outputCtx.strokeStyle = "#333"
+    outputCtx.lineWidth = 1
+
+    local armLength = (OUTPUT_HOVER_POINT_CROSS_SIZE - 1) / 2
+    outputCtx:moveTo(x - armLength, y)
+    outputCtx:lineTo(x + armLength, y)
+    outputCtx:moveTo(x, y - armLength)
+    outputCtx:lineTo(x, y + armLength)
+    outputCtx:stroke()
+end
+
 function redraw(recalculateOldPaths)
     inputCtx:clearRect(0, 0, inputCanvas.width, inputCanvas.height)
     outputCtx:clearRect(0, 0, outputCanvas.width, outputCanvas.height)
@@ -279,6 +298,9 @@ function redraw(recalculateOldPaths)
     end
     inputCtx:drawImage(precomputedInputCanvas, 0, 0)
     outputCtx:drawImage(precomputedOutputCanvas, 0, 0)
+    if not userDrawing then
+        drawOutputCursor()
+    end
     shouldRedraw = false
 end
 
@@ -459,6 +481,11 @@ inputCanvas:addEventListener("mouseout", userFinishPath)
 
 -- TODO: add coordinates of mouse to some part of the UI
 local function cursorMove(_, event)
+    markDirty()
+    local mx, my = getEventCoords(event)
+    mouseHoverOutputPoint = inputBounds:pixelToComplex(mx, my)
+    print(mouseHoverOutputPoint)
+    mouseHoverOutputPoint = func:evaluate(mouseHoverOutputPoint)
     if not userDrawing or lockUserInput then
         return
     end
