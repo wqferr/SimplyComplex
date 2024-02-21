@@ -194,23 +194,25 @@ local function recursivelyPushPointsIfNeeded(depth, targetInputPoint, targetOutp
         targetOutputPoint, endThickness = calculateFuncAndThickness(targetInputPoint)
     end
     if not currentOutputSquiggle():hasPoints() then
-        return pushPointPair(targetInputPoint, targetOutputPoint, endThickness, false)
+        return { pushPointPair(targetInputPoint, targetOutputPoint, endThickness, false) }
     end
 
     local dist = (targetOutputPoint - currentOutputSquiggle():endPoint()):abs()
     local interpStart = currentInputSquiggle():endPoint()
     local interpEnd = targetInputPoint
     if dist >= MAX_PIXEL_DISTANCE_BEFORE_DISCONTINUITY then
-        return pushPointPair(targetInputPoint, targetOutputPoint, endThickness, true)
+        return { pushPointPair(targetInputPoint, targetOutputPoint, endThickness, true) }
     elseif dist >= maxTolerableDistanceForInterp and depth <= MAX_INTERP_TRIES then
+        local promises = {}
         for i = 1, INTERP_STEPS do
             local interpT = i / INTERP_STEPS
             local interpPoint = (1-interpT) * interpStart + interpT * interpEnd
             local interpF, interpThickness = calculateFuncAndThickness(interpPoint)
-            return recursivelyPushPointsIfNeeded(depth+1, interpPoint, interpF, interpThickness)
+            table.insert(promises, recursivelyPushPointsIfNeeded(depth+1, interpPoint, interpF, interpThickness))
         end
+        return promises
     else
-        return pushPointPair(targetInputPoint, targetOutputPoint, endThickness, false)
+        return { pushPointPair(targetInputPoint, targetOutputPoint, endThickness, false) }
     end
 end
 
@@ -309,21 +311,40 @@ local function finishPath()
 end
 
 local lockUserInput = false
-local function fullyRecalculate()
-    -- TODO: use Promise.map to calculate all points of the curves independently
-    -- not sure if this is actually possible
-    local oldInputSquiggles = inputSquiggles
-    inputSquiggles, outputSquiggles = {}, {}
-    lockUserInput = true
-    for _, squiggle in ipairs(oldInputSquiggles) do
-        startPath("prog", squiggle:startPoint(), squiggle.color, squiggle.defaultThickness)
-        for point in squiggle:tail() do
-            recursivelyPushPointsIfNeeded(1, point)
-        end
-        finishPath()
+local recalculateCoroutine = nil
+local recalcInterval = nil
+local function progressFullRecalc()
+    if recalculateCoroutine then
+        coroutine.resume(recalculateCoroutine)
+        redraw()
+    else
+        js.global:clearInterval(recalcInterval)
+        recalcInterval = nil
     end
-    lockUserInput = false
-    redraw(true)
+end
+local function fullyRecalculate()
+    recalculateCoroutine = coroutine.create(function()
+        local oldInputSquiggles = inputSquiggles
+        inputSquiggles, outputSquiggles = {}, {}
+        redraw(true)
+        lockUserInput = true
+        for _, squiggle in ipairs(oldInputSquiggles) do
+            startPath("prog", squiggle:startPoint(), squiggle.color, squiggle.defaultThickness)
+            local i = 1
+            for point in squiggle:tail() do
+                recursivelyPushPointsIfNeeded(1, point)
+                if i % POINTS_PUSHED_PER_TICK == 0 then
+                    coroutine.yield()
+                end
+                i = i + 1
+            end
+            finishPath()
+        end
+        lockUserInput = false
+        redraw(true)
+        recalculateCoroutine = nil
+    end)
+    recalcInterval = js.global:setInterval(progressFullRecalc, 1)
 end
 
 local function updateFunc()
@@ -417,6 +438,9 @@ strokeStyleComponent:addEventListener("change", function(_, event)
 end)
 
 local function userStartPath(_, event)
+    if lockUserInput then
+        return
+    end
     startPath("user", event, strokeStyle, lineWidth)
 end
 inputCanvas:addEventListener("touchstart", userStartPath, {passive = false})
