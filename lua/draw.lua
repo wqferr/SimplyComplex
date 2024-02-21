@@ -372,6 +372,7 @@ local function fullyRecalculate()
     recalcInterval = js.global:setInterval(progressFullRecalc, 1)
 end
 
+local lastLoadedFunc
 local function updateFunc()
     local newFunc, reason = loadFunc(funcTextField.value)
     if newFunc then
@@ -382,6 +383,7 @@ local function updateFunc()
             newFunc = sd.const(newFunc)
         end
         if sd.isExpression(newFunc) then
+            lastLoadedFunc = funcTextField.value
             func = newFunc
             fullyRecalculate()
         else
@@ -393,6 +395,12 @@ local function updateFunc()
 end
 funcTextField.value = DEFAULT_FUNC
 updateFunc()
+
+js.global:setInterval(function()
+    if lastLoadedFunc ~= funcTextField.value then
+        updateFunc()
+    end
+end, 1000)
 
 toolbar:addEventListener("click", function(_, event)
     if event.target.id == "clear" then
