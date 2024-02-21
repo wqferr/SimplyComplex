@@ -8,11 +8,11 @@ local sd = _G.sd
 local CPath = require "complexpath"
 local Bounds = require "bounds"
 local Axes = require "axes"
+local promise = require "promise"
 require "constants"
 require "im-sd-bridge"
 
 -- TODO: add actual line smoothing to input
--- TODO: use promises to fully recalculate so it doesnt hang
 local document = js.global.document
 
 local inputCanvas = document:getElementById "inputBoard"
@@ -174,14 +174,17 @@ local function shouldCreateNewMousePoint(x, y)
 end
 
 local function pushPointPair(inputPoint, outputPoint, outputThickness, discontinuity)
-    currentInputSquiggle():pushPoint(inputPoint)
-    currentInputSquiggle():drawLastAddedSegment(precomputedInputCtx, inputBounds)
+    return promise(function(_, accept, reject)
+        currentInputSquiggle():pushPoint(inputPoint)
+        currentInputSquiggle():drawLastAddedSegment(precomputedInputCtx, inputBounds)
 
-    if not outputPoint or not outputThickness then
-        outputPoint, outputThickness = calculateFuncAndThickness(inputPoint)
-    end
-    currentOutputSquiggle():pushPoint(outputPoint, outputThickness, discontinuity)
-    currentOutputSquiggle():drawLastAddedSegment(precomputedOutputCtx, outputBounds)
+        if not outputPoint or not outputThickness then
+            outputPoint, outputThickness = calculateFuncAndThickness(inputPoint)
+        end
+        currentOutputSquiggle():pushPoint(outputPoint, outputThickness, discontinuity)
+        currentOutputSquiggle():drawLastAddedSegment(precomputedOutputCtx, outputBounds)
+        accept()
+    end)
 end
 
 -- FIXME: update this when user zooms in or out
@@ -191,24 +194,23 @@ local function recursivelyPushPointsIfNeeded(depth, targetInputPoint, targetOutp
         targetOutputPoint, endThickness = calculateFuncAndThickness(targetInputPoint)
     end
     if not currentOutputSquiggle():hasPoints() then
-        pushPointPair(targetInputPoint, targetOutputPoint, endThickness, false)
-        return
+        return pushPointPair(targetInputPoint, targetOutputPoint, endThickness, false)
     end
 
     local dist = (targetOutputPoint - currentOutputSquiggle():endPoint()):abs()
     local interpStart = currentInputSquiggle():endPoint()
     local interpEnd = targetInputPoint
     if dist >= MAX_PIXEL_DISTANCE_BEFORE_DISCONTINUITY then
-        pushPointPair(targetInputPoint, targetOutputPoint, endThickness, true)
+        return pushPointPair(targetInputPoint, targetOutputPoint, endThickness, true)
     elseif dist >= maxTolerableDistanceForInterp and depth <= MAX_INTERP_TRIES then
         for i = 1, INTERP_STEPS do
             local interpT = i / INTERP_STEPS
             local interpPoint = (1-interpT) * interpStart + interpT * interpEnd
             local interpF, interpThickness = calculateFuncAndThickness(interpPoint)
-            recursivelyPushPointsIfNeeded(depth+1, interpPoint, interpF, interpThickness)
+            return recursivelyPushPointsIfNeeded(depth+1, interpPoint, interpF, interpThickness)
         end
     else
-        pushPointPair(targetInputPoint, targetOutputPoint, endThickness, false)
+        return pushPointPair(targetInputPoint, targetOutputPoint, endThickness, false)
     end
 end
 
@@ -308,6 +310,8 @@ end
 
 local lockUserInput = false
 local function fullyRecalculate()
+    -- TODO: use Promise.map to calculate all points of the curves independently
+    -- not sure if this is actually possible
     local oldInputSquiggles = inputSquiggles
     inputSquiggles, outputSquiggles = {}, {}
     lockUserInput = true
