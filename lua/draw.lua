@@ -149,11 +149,13 @@ local function loadFunc(text)
         return nil, "Could not compile"
     end
     local ok, result = pcall(chunk)
-    if ok then
-        return result
-    else
+    if not ok then
         return nil, result
     end
+    if tostring(result) == tostring(func) then
+        return nil, "Function did not change"
+    end
+    return result
 end
 
 local function calculateFuncAndThickness(c)
