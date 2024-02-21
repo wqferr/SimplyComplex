@@ -5,7 +5,6 @@ body {
 }
 
 header {
-    height: 5vh;
     background-color: #a0a0f0
 }
 
@@ -14,7 +13,7 @@ header > h1 {
 }
 
 #app {
-    height: 70vh;
+    height: 75vh;
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -31,7 +30,7 @@ header > h1 {
 }
 
 .credits-mdash {
-    margin: 0 2em;
+    margin: 0 1em;
 }
 
 #boards {

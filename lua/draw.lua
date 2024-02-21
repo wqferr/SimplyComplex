@@ -146,7 +146,12 @@ local function loadFunc(text)
     if not chunk then
         return nil, "Could not compile"
     end
-    return chunk()
+    local ok, result = pcall(chunk)
+    if ok then
+        return result
+    else
+        return nil, result
+    end
 end
 
 local function calculateFuncAndThickness(c)
