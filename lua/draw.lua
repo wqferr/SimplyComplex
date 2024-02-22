@@ -502,7 +502,10 @@ local function cursorMove(_, event)
     pushMousePoint(event)
 end
 inputCanvas:addEventListener("mousemove", cursorMove)
-inputCanvas:addEventListener("touchmove", cursorMove)
+inputCanvas:addEventListener("touchmove", function(_, event)
+    cursorMove(_, event)
+    event:preventDefault()
+end, {passive = false})
 
 local function functTextInputChange()
     if lockUserInput then
