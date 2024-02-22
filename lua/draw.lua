@@ -251,6 +251,7 @@ local function getEventCoords(event)
         return event.touches[0].clientX - inputCanvas.offsetLeft, event.touches[0].clientY - inputCanvas.offsetTop
     end
 end
+
 local function pushMousePoint(event, forceNewPoint)
     if not userDrawing then
         return
@@ -476,7 +477,11 @@ local function userStartPath(_, event)
     end
     startPath("user", event, strokeStyle, lineWidth)
 end
-inputCanvas:addEventListener("touchstart", userStartPath, {passive = false})
+local lastTouchEvent
+inputCanvas:addEventListener("touchstart", function(_, event)
+    userStartPath(nil, event)
+    lastTouchEvent = event
+end, {passive = false})
 inputCanvas:addEventListener("mousedown", userStartPath)
 
 local function userFinishPath(_, mouseEvent)
@@ -487,7 +492,7 @@ local function userFinishPath(_, mouseEvent)
     finishPath()
 end
 inputCanvas:addEventListener("mouseup", userFinishPath)
-inputCanvas:addEventListener("touchend", userFinishPath)
+inputCanvas:addEventListener("touchend", function(_) userFinishPath(nil, lastTouchEvent) end)
 inputCanvas:addEventListener("mouseout", userFinishPath)
 
 local function cursorMove(_, event)
@@ -502,8 +507,10 @@ local function cursorMove(_, event)
     pushMousePoint(event)
 end
 inputCanvas:addEventListener("mousemove", cursorMove)
+
 inputCanvas:addEventListener("touchmove", function(_, event)
     cursorMove(_, event)
+    lastTouchEvent = event
     event:preventDefault()
 end, {passive = false})
 
