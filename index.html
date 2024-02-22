@@ -4,10 +4,12 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="stylesheet" href="style/normalize.css" />
-    <link rel="stylesheet" href="style/style.css" />
-    <link rel="manifest" href="SimplyComplex.webmanifest" />
-    <link rel="icon" type="image/x-icon" href="icons/favicon.ico" />
+    <link rel="stylesheet" href="style/main.css" />
+    <link rel="stylesheet" href="style/tutorial.css"/>
 
+    <link rel="manifest" href="SimplyComplex.webmanifest" />
+
+    <link rel="icon" type="image/x-icon" href="icons/favicon.ico" />
     <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png" />
     <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32x32.png" />
     <link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16x16.png" />
@@ -55,18 +57,44 @@
                 </div>
             </div>
         </div>
+        <!-- TODO: add loading animation with dynamic SVG of a Limaçon -->
         <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toolcool-color-picker/dist/toolcool-color-picker.min.js"></script>
         <script type="application/lua" src="lua/draw.lua" async></script>
         <script type="application/lua" src="lua/arrow.lua" async></script>
 
-        <div id="credits">
-            <ul>
-                <li><img id="poweredByLua" alt="Powered by Lua" title="Powered by Lua" src="img/powered-by-lua.png" /></li>
+        <article id="tutorial">
+            <!-- TODO: video tutorial -->
+            <h2 class="tutorial-heading">Tutorial</h2>
+            <section id="whatAmILookingAt">
+                <h3 class="tutorial-heading">What am I even looking at?</h3>
+                <p>
+                The axes above represent two copies of the complex plane.
+                Both are linked by a function typed in the center text field:
+                the first one can be drawn on and is used as input, while the
+                output is represented in the second one. But wait, you might say,
+                how can squiggles be used as inputs to a complex function?
+                I thought functions operated on numbers&#8230; or whatever complex numbers even are.
+                </p>
+                <p>
+                The rest of the tutorial is here to explain <em>why</em> and <em>how</em> squiggles
+                in the first axes are being mapped to squiggles in the second axes.
+                </p>
+            </section>
+
+            <section>
+            </section>
+        </article>
+
+        <footer>
+            <div class="flex-centered-col flex-align-nostretch">
+                <img id="poweredByLua" alt="Powered by Lua" title="Powered by Lua" src="img/powered-by-lua.png" />
+            </div>
+            <ul id="credits">
                 <li>Idea and implementation by <a href="https://github.com/wqferr" target="_blank" title="Check out my other projects on GitHub">William Quelho Ferreira</a> <span class="credits-mdash">&mdash;</span> wqferr@gmail.com</li>
                 <li>Toolbar UX by <a href="https://linktr.ee/anayagf" target="_blank" title="Check out her portfolio on linktr.ee">Anayã Gimenes Ferreira</a> <span class="credits-mdash">&mdash;</span> anayagimenes@gmail.com</li>
                 <li>JavaScript Lua VM by <a href="https://github.com/fengari-lua/fengari" target="_blank" title="Check out their work on GitHub">Fengari project</a></li>
             </ul>
-        </div>
+        </footer>
     </main>
 </body>
 </html>

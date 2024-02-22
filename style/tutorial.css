@@ -1,0 +1,14 @@
+#tutorial {
+    padding: 0 10vw;
+    text-align: justify;
+}
+
+@media(min-width: 800px) {
+    #tutorial {
+        padding: 0 30vw;
+    }
+}
+/* #tutorial > h2,h3 { */
+/*     text-align: center; */
+/* } */
+/*  */
