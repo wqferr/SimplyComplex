@@ -477,22 +477,20 @@ local function userStartPath(_, event)
     end
     startPath("user", event, strokeStyle, lineWidth)
 end
-local lastTouchEvent
-inputCanvas:addEventListener("touchstart", function(_, event)
-    userStartPath(nil, event)
-    lastTouchEvent = event
-end, {passive = false})
+inputCanvas:addEventListener("touchstart", userStartPath, {passive = false})
 inputCanvas:addEventListener("mousedown", userStartPath)
 
 local function userFinishPath(_, mouseEvent)
     if lockUserInput then
         return
     end
-    pushMousePoint(mouseEvent, true)
+    if mouseEvent then
+        pushMousePoint(mouseEvent, true)
+    end
     finishPath()
 end
 inputCanvas:addEventListener("mouseup", userFinishPath)
-inputCanvas:addEventListener("touchend", function(_) userFinishPath(nil, lastTouchEvent) end)
+inputCanvas:addEventListener("touchend", function(_) userFinishPath(nil, nil) end)
 inputCanvas:addEventListener("mouseout", userFinishPath)
 
 local function cursorMove(_, event)
@@ -510,7 +508,6 @@ inputCanvas:addEventListener("mousemove", cursorMove)
 
 inputCanvas:addEventListener("touchmove", function(_, event)
     cursorMove(_, event)
-    lastTouchEvent = event
     event:preventDefault()
 end, {passive = false})
 
