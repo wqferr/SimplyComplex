@@ -3,7 +3,7 @@
     text-align: justify;
 }
 
-@media(min-width: 800px) {
+@media(min-width: 1200px) {
     #tutorial {
         padding: 0 30vw;
     }
