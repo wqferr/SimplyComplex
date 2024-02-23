@@ -374,8 +374,8 @@ local function fullyRecalculate()
 end
 
 local lastLoadedFunc
-local function updateFunc()
-    local newFunc, reason = loadFunc(funcTextField.value)
+local function updateFuncToLuaExpression(luaExpr)
+    local newFunc, reason = loadFunc(luaExpr)
     if newFunc then
         if type(newFunc) == "number" then
             newFunc = im.asComplex(newFunc)
@@ -394,6 +394,12 @@ local function updateFunc()
         print(reason)
     end
 end
+
+local function updateFunc()
+    -- TODO: update this to convert MathQuill into a Lua expression in this function
+    updateFuncToLuaExpression(funcTextField.value)
+end
+
 funcTextField.value = DEFAULT_FUNC
 updateFunc()
 
