@@ -64,9 +64,9 @@
 
         <article id="tutorial">
             <!-- TODO: video tutorial -->
-            <h2 class="tutorial-heading">Tutorial</h2>
+            <h2>Tutorial</h2>
             <section id="whatAmILookingAt">
-                <h3 class="tutorial-heading">What am I even looking at?</h3>
+                <h3>What am I even looking at?</h3>
                 <p>
                 The axes above represent two copies of the complex plane.
                 Both are linked by a function typed in the center text field:
@@ -81,7 +81,36 @@
                 </p>
             </section>
 
-            <section>
+            <section id="whyDoThis">
+                <h3>Why would anyone make this?</h3>
+                <p>
+                Complex function visualization is&#8230; well&#8230; complex. "Regular" ℝ → ℝ functions
+                are easy: just graph the output against the input. 2 dimensions, easily fits in our 3-dimensional
+                world. Even ℝ<sup>2</sup> → ℝ and ℝ → ℝ<sup>2</sup> can be visualized like this.
+                </p>
+                <p>
+                The complex plane, however, is 2-dimensional itself. If we wanted to graph output against input,
+                we'd need 4 dimensions, so we have to be more creative with visualization. One well estabilished
+                technique is <a href="https://en.wikipedia.org/wiki/Domain_coloring" target="_blank" title="Domain coloring Wikipedia article">domain coloring</a>,
+                where you have a 2-dimensional output image whose pixels are mapped to points in the complex plane.
+                The color of each pixel is then determined by the function value at that pixel's corresponding complex point,
+                with the hue being mapped to the value's principal argument, and color intensity (or "value") being mapped
+                to its absolute value.
+                </p>
+                <p>
+                While domain coloring is useful, it has its limitations. For one, people with colorblindness
+                can have some difficulty distinguishing regions in the image. For another, it's difficult to
+                see structures that aren't centered around the origin. Sure, you can see if a path contains all
+                hues and therefore makes a loop around the origin, but try to determine whether a path makes a
+                loop around 1 + i <!-- TODO: use a MathQuill span for this --> and you're in for a very bad time.
+                </p>
+                <p>
+                This project uses a different approach. I first saw this type of visualization in a
+                <a href="https://youtu.be/pNp8Qf20-sA?t=206" target="_blank" title="Video inspiration for this whole project">Welch Labs YouTube video, timestamped here</a>:
+                if you draw something in the input plane, then move the pixels according to the function at those
+                points, the output image is distorted in a unique way depending on the given function. The whole video
+                (really, the whole series) is worth a watch, even if you are already very familiar with complex numbers.
+                </p>
             </section>
         </article>
 
@@ -92,6 +121,12 @@
             <ul id="credits">
                 <li>Idea and implementation by <a href="https://github.com/wqferr" target="_blank" title="Check out my other projects on GitHub">William Quelho Ferreira</a> <span class="credits-mdash">&mdash;</span> wqferr@gmail.com</li>
                 <li>Toolbar UX by <a href="https://linktr.ee/anayagf" target="_blank" title="Check out her portfolio on linktr.ee">Anayã Gimenes Ferreira</a> <span class="credits-mdash">&mdash;</span> anayagimenes@gmail.com</li>
+                <li>
+                    Code help and rubber duckying by
+                    <a href="https://github.com/gwenthekween" target="_blank" title="Check out her work on GitHub">Guinevere Larsen</a><!--
+                    --><a href="https://en.wikipedia.org/wiki/Serial_comma" target="_blank">,</a> and
+                    <a href="https://github.com/JJSax" target="_blank" title="Check out his other work on GitHub">Jared Augerot</a>
+                </li>
                 <li>JavaScript Lua VM by <a href="https://github.com/fengari-lua/fengari" target="_blank" title="Check out their work on GitHub">Fengari project</a></li>
             </ul>
         </footer>
