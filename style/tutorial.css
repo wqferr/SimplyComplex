@@ -8,7 +8,14 @@
         padding: 0 30vw;
     }
 }
-/* #tutorial > h2,h3 { */
-/*     text-align: center; */
-/* } */
-/*  */
+
+.small-text {
+    font-size: 70%;
+}
+
+.centered-youtube-vid {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+}

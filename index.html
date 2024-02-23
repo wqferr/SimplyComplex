@@ -6,6 +6,7 @@
     <link rel="stylesheet" href="style/normalize.css" />
     <link rel="stylesheet" href="style/main.css" />
     <link rel="stylesheet" href="style/tutorial.css"/>
+    <link rel="stylesheet" href="mathquill-0.10.1/mathquill.css" />
 
     <link rel="manifest" href="SimplyComplex.webmanifest" />
 
@@ -17,7 +18,12 @@
     <link rel="manifest" href="site.webmanifest" />
     <title>Simply Complex</title>
 
-    <script src="js/fengari-web.js" type="text/javascript" async></script>
+    <script type="text/javascript" src="js/fengari-web.js" async></script>
+    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+    <script type="text/javascript" src="mathquill-0.10.1/mathquill.min.js"></script>
+    <script type="text/javascript">
+        var MQ = MathQuill.getInterface(2);
+    </script>
 </head>
 <body>
     <header>
@@ -84,9 +90,9 @@
             <section id="whyDoThis">
                 <h3>Why would anyone make this?</h3>
                 <p>
-                Complex function visualization is&#8230; well&#8230; complex. "Regular" ℝ → ℝ functions
+                Complex function visualization is&#8230; well&#8230; complex. "Regular" ℝ&nbsp;→&nbsp;ℝ functions
                 are easy: just graph the output against the input. 2 dimensions, easily fits in our 3-dimensional
-                world. Even ℝ<sup>2</sup> → ℝ and ℝ → ℝ<sup>2</sup> can be visualized like this.
+                world. Even ℝ<sup>2</sup>&nbsp;→&nbsp;ℝ and ℝ&nbsp;→&nbsp;ℝ<sup>2</sup> functions can be visualized like this.
                 </p>
                 <p>
                 The complex plane, however, is 2-dimensional itself. If we wanted to graph output against input,
@@ -102,21 +108,28 @@
                 can have some difficulty distinguishing regions in the image. For another, it's difficult to
                 see structures that aren't centered around the origin. Sure, you can see if a path contains all
                 hues and therefore makes a loop around the origin, but try to determine whether a path makes a
-                loop around 1&nbsp;+&nbsp;i <!-- TODO: use a MathQuill span for this --> and you're in for a very bad time.
+                loop around <span class="math">1&nbsp;+&nbsp;i</span> and you're in for a very bad time.
                 </p>
                 <p>
                 With the limitations of domain coloring, I sought a different way to visualize what a function
                 does to its inputs. And this is when Welch Labs comes in.
                 </p>
             </section>
-            <section>
+            <section id="howDoesItWork">
                 <h3>How does it work?</h3>
                 <p>
-                This project uses a different approach than domain coloring. I first saw this type of visualization in a
-                <a href="https://youtu.be/pNp8Qf20-sA?t=206" target="_blank" title="Video inspiration for this whole project">Welch Labs YouTube video, timestamped here</a>.
+                This project uses a different approach than domain coloring. I first saw this type of visualization in the following Welch Labs YouTube video.
+                </p>
+                <div class="centered-youtube-vid">
+                    <iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/pNp8Qf20-sA?si=WWMDR2TbXKvmNHyC&amp;start=206" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+                </div>
+                <!-- <a href="https://youtu.be/pNp8Qf20-sA?t=206" target="_blank" title="Video inspiration for this whole project"> -->
+                <!--     Welch Labs YouTube video, timestamped here&#60;&#33;&#45;&#45; -->
+                <!-- &#45;&#45;&#62;</a>. -->
+                <p>
                 Pixels in the input plane are mapped to complex numbers, just like in domain coloring, but instead of using
-                fixed colors for every output pixel, we use colors defined in the input plane. So if a red pixel at 1 + i
-                gets mapped to 2i, the point 2i in the output plane will be colored red.
+                fixed colors for every output pixel, we use colors defined in the input plane. So if a red pixel at <span class="math">1&nbsp;+&nbsp;i</span>
+                gets mapped to <span class="math">2i</span>, the point <span class="math">2i</span> in the output plane will be colored red.
                 </p>
                 <p>
                 This process distorts the input image in a unique way depending on the chosen function.
@@ -130,8 +143,20 @@
                 input squiggle, creating a new morphed path. There's some extra care taken for rapidly changing regions
                 and discontinuities, but those are special case details.
                 </p>
+                <p>
+                This more abstract approach allows Simply Complex to have essentially infinite resolution. While in
+                the pixels approach, regions with large derivative absolute values will be spread out, leaving uncolored
+                pixels inbetween. With paths, this is not a problem: we simply* calculate the derivative at that point
+                and scale the path width by its absolute value.
+                </p>
+                <p class="small-text">
+                *Of course, calculating the derivative of an arbitrary, user-defined function isn't exactly a simple task,
+                but it is possible and I have done so with my <a href="https://github.com/wqferr/SymDiff" target="_blank" title="SymDiff GitHub page">SymDiff</a>
+                (for "symbolic differentiation") library.
+                </p>
             </section>
         </article>
+        <script type="text/javascript" src="js/render-math.js"></script>
 
         <footer>
             <div class="flex-centered-col flex-align-nostretch">
