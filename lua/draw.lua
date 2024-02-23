@@ -204,7 +204,7 @@ local function recursivelyPushPointsIfNeeded(depth, targetInputPoint, targetOutp
     local dist = (targetOutputPoint - currentOutputSquiggle():endPoint()):abs()
     local interpStart = currentInputSquiggle():endPoint()
     local interpEnd = targetInputPoint
-    if dist >= MAX_PIXEL_DISTANCE_BEFORE_DISCONTINUITY then
+    if outputBounds:measurementToPixels(dist) >= MAX_PIXEL_DISTANCE_BEFORE_DISCONTINUITY then
         return { pushPointPair(targetInputPoint, targetOutputPoint, endThickness, true) }
     elseif dist >= maxTolerableDistanceForInterp and depth <= MAX_INTERP_TRIES then
         local promises = {}
