@@ -123,9 +123,6 @@
                 <div class="centered-youtube-vid">
                     <iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/pNp8Qf20-sA?si=WWMDR2TbXKvmNHyC&amp;start=206" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
                 </div>
-                <!-- <a href="https://youtu.be/pNp8Qf20-sA?t=206" target="_blank" title="Video inspiration for this whole project"> -->
-                <!--     Welch Labs YouTube video, timestamped here&#60;&#33;&#45;&#45; -->
-                <!-- &#45;&#45;&#62;</a>. -->
                 <p>
                 Pixels in the input plane are mapped to complex numbers, just like in domain coloring, but instead of using
                 fixed colors for every output pixel, we use colors defined in the input plane. So if a red pixel at <span class="math">1&nbsp;+&nbsp;i</span>
@@ -154,6 +151,11 @@
                 but it is possible and I have done so with my <a href="https://github.com/wqferr/SymDiff" target="_blank" title="SymDiff GitHub page">SymDiff</a>
                 (for "symbolic differentiation") library.
                 </p>
+                <p>
+                You can test the path width scaling yourself: try making a path that starts off far from the origin, and goes
+                towards it and eventually reaches it. If the function is set to <span class="math">f\left(z\right) = z^2</span>, the output
+                path width will visibly decrease when it gets closer to the origin, eventually disappearing.
+                </p>
             </section>
         </article>
         <script type="text/javascript" src="js/render-math.js"></script>
@@ -172,6 +174,7 @@
                     <a href="https://github.com/JJSax" target="_blank" title="Check out his work on GitHub">Jared Augerot</a>
                 </li>
                 <li>JavaScript Lua VM by <a href="https://github.com/fengari-lua/fengari" target="_blank" title="Check out their work on GitHub">Fengari project</a></li>
+                <li>Math rendering in HTML by <a href="http://mathquill.com/" target="_blank" title="Check out the official website">MathQuill</a>
             </ul>
         </footer>
     </main>
