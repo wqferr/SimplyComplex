@@ -70,7 +70,7 @@
                 <p>
                 The axes above represent two copies of the complex plane.
                 Both are linked by a function typed in the center text field:
-                the first one can be drawn on and is used as input, while the
+                the first axes can be drawn on and is used as input, while the
                 output is represented in the second one. But wait, you might say,
                 how can squiggles be used as inputs to a complex function?
                 I thought functions operated on numbers&#8230; or whatever complex numbers even are.
@@ -94,7 +94,7 @@
                 technique is <a href="https://en.wikipedia.org/wiki/Domain_coloring" target="_blank" title="Domain coloring Wikipedia article">domain coloring</a>,
                 where you have a 2-dimensional output image whose pixels are mapped to points in the complex plane.
                 The color of each pixel is then determined by the function value at that pixel's corresponding complex point,
-                with the hue being mapped to the value's principal argument, and color intensity (or "value") being mapped
+                with the hue being mapped to the function value's principal argument, and color intensity (or "value") being mapped
                 to its absolute value.
                 </p>
                 <p>
@@ -102,14 +102,33 @@
                 can have some difficulty distinguishing regions in the image. For another, it's difficult to
                 see structures that aren't centered around the origin. Sure, you can see if a path contains all
                 hues and therefore makes a loop around the origin, but try to determine whether a path makes a
-                loop around 1 + i <!-- TODO: use a MathQuill span for this --> and you're in for a very bad time.
+                loop around 1&nbsp;+&nbsp;i <!-- TODO: use a MathQuill span for this --> and you're in for a very bad time.
                 </p>
                 <p>
-                This project uses a different approach. I first saw this type of visualization in a
-                <a href="https://youtu.be/pNp8Qf20-sA?t=206" target="_blank" title="Video inspiration for this whole project">Welch Labs YouTube video, timestamped here</a>:
-                if you draw something in the input plane, then move the pixels according to the function at those
-                points, the output image is distorted in a unique way depending on the given function. The whole video
-                (really, the whole series) is worth a watch, even if you are already very familiar with complex numbers.
+                With the limitations of domain coloring, I sought a different way to visualize what a function
+                does to its inputs. And this is when Welch Labs comes in.
+                </p>
+            </section>
+            <section>
+                <h3>How does it work?</h3>
+                <p>
+                This project uses a different approach than domain coloring. I first saw this type of visualization in a
+                <a href="https://youtu.be/pNp8Qf20-sA?t=206" target="_blank" title="Video inspiration for this whole project">Welch Labs YouTube video, timestamped here</a>.
+                Pixels in the input plane are mapped to complex numbers, just like in domain coloring, but instead of using
+                fixed colors for every output pixel, we use colors defined in the input plane. So if a red pixel at 1 + i
+                gets mapped to 2i, the point 2i in the output plane will be colored red.
+                </p>
+                <p>
+                This process distorts the input image in a unique way depending on the chosen function.
+                The whole video (really, the whole series) is worth a watch, even if you are already very familiar
+                with complex numbers.
+                </p>
+                <p>
+                Instead of pixels, however, Simply Complex uses paths as primitves: every squiggle you draw on the first
+                axes is broken into a series of line segments, whose endpoints are mapped according to the given function.
+                After the mapping is complete, the new points in the output axes are connected with the same color as the
+                input squiggle, creating a new morphed path. There's some extra care taken for rapidly changing regions
+                and discontinuities, but those are special case details.
                 </p>
             </section>
         </article>
