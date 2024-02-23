@@ -63,7 +63,7 @@ header > h1 {
     gap: 0;
 }
 
-.board-container canvas {
+#inputBoard {
     touch-action: none;
 }
 

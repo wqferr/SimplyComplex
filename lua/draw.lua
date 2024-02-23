@@ -507,7 +507,7 @@ end
 inputCanvas:addEventListener("mousemove", cursorMove)
 
 inputCanvas:addEventListener("touchmove", function(_, event)
-    cursorMove(_, event)
+    cursorMove(nil, event)
     event:preventDefault()
 end, {passive = false})
 
