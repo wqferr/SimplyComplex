@@ -214,12 +214,13 @@ local function recursivelyPushPointsIfNeeded(args)
         for i = 1, INTERP_STEPS do
             local interpT = i / INTERP_STEPS
             local interpPoint = (1-interpT) * interpStart + interpT * interpEnd
-            local interpF, interpThickness = calculateFunc(interpPoint)
+            local interpF, interpThickness, interpDeriv = calculateFunc(interpPoint)
             table.insert(promises, recursivelyPushPointsIfNeeded{
                 interpPoint,
                 depth = depth + 1,
                 targetOutputPoint = interpF,
                 endThickness = interpThickness,
+                derivative = interpDeriv
             })
         end
         -- FIXME: make promises work in order!
