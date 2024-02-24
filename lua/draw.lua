@@ -338,25 +338,20 @@ local function fullyRecalculate()
     inputSquiggles, outputSquiggles = {}, {}
 
     -- TODO: setup loading animation
-    local prom = promise(function(_, accept) accept() end)
 
     -- clear screen
     redraw(true)
     lockUserInput = true
 
     for _, squiggle in ipairs(oldInputSquiggles) do
-        prom = prom:and_then(function()
-            startPath("prog", squiggle:startPoint(), squiggle.color, squiggle.defaultThickness)
-            for point in squiggle:tail() do
-                recursivelyPushPointsIfNeeded{ point }
-            end
-            finishPath()
-        end)
+        startPath("prog", squiggle:startPoint(), squiggle.color, squiggle.defaultThickness)
+        for point in squiggle:tail() do
+            recursivelyPushPointsIfNeeded{ point }
+        end
+        finishPath()
     end
-    prom:and_then(function()
-        lockUserInput = false
-        redraw(true)
-    end)
+    lockUserInput = false
+    redraw(true)
 end
 
 local lastLoadedFunc
