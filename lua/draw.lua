@@ -222,12 +222,6 @@ local function recursivelyPushPointsIfNeeded(depth, targetInputPoint, targetOutp
     end
 end
 
-local function simplePushPoint(x, y, c)
-    pushPointPair(c)
-    lastMouseX, lastMouseY = x, y
-    markDirty()
-end
-
 local function createNewMousePoint(x, y, c)
     recursivelyPushPointsIfNeeded(1, c)
     lastMouseX, lastMouseY = x, y
@@ -235,11 +229,8 @@ local function createNewMousePoint(x, y, c)
 end
 
 local function pushComplexPoint(c, x, y, forceNewPoint)
-    if forceNewPoint then
-        simplePushPoint(x, y, c)
-    elseif shouldCreateNewMousePoint(x, y) then
+    if forceNewPoint or shouldCreateNewMousePoint(x, y) then
         createNewMousePoint(x, y, c)
-        simplePushPoint(x, y, c)
     end
 end
 
