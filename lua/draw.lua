@@ -193,7 +193,6 @@ end
 
 -- FIXME: update this when user zooms in or out
 local maxTolerableDistanceForInterp = outputBounds:pixelsToMeasurement(MAX_PIXEL_DISTANCE_BEFORE_INTERP)
--- local function recursivelyPushPointsIfNeeded(depth, targetInputPoint, targetOutputPoint, endThickness)
 local function recursivelyPushPointsIfNeeded(args)
     local targetInputPoint = args.targetInputPoint or args[1]
     local targetOutputPoint, endThickness, derivative = args.targetOutputPoint, args.endThickness, args.derivative
@@ -218,7 +217,7 @@ local function recursivelyPushPointsIfNeeded(args)
             local interpF, interpThickness = calculateFunc(interpPoint)
             table.insert(promises, recursivelyPushPointsIfNeeded{
                 interpPoint,
-                depth = depth+1,
+                depth = depth + 1,
                 targetOutputPoint = interpF,
                 endThickness = interpThickness,
             })
