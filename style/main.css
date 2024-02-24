@@ -63,6 +63,11 @@ header > h1 {
     gap: 0;
 }
 
+.board-container > canvas {
+    border-radius: 15px;
+    box-shadow: 1px 1px 4px;
+}
+
 #inputBoard {
     touch-action: none;
 }
