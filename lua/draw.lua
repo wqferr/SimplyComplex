@@ -158,12 +158,12 @@ local function loadFunc(text)
     return result
 end
 
-local function calculateFuncAndThickness(c)
+local function calculateFunc(c)
     ---@type Complex
     local fc = func:evaluate(c)
     local dz = func:derivative():evaluate(c):abs()
     local originalThickness = lineWidth * STROKE_WIDTH_SCALING_FACTOR
-    return fc, originalThickness * dz
+    return fc, originalThickness * dz, dz
 end
 
 local function pixelDist(x1, y1, x2, y2)
@@ -183,7 +183,7 @@ local function pushPointPair(inputPoint, outputPoint, outputThickness, discontin
         currentInputSquiggle():drawLastAddedSegment(precomputedInputCtx, inputBounds)
 
         if not outputPoint or not outputThickness then
-            outputPoint, outputThickness = calculateFuncAndThickness(inputPoint)
+            outputPoint, outputThickness = calculateFunc(inputPoint)
         end
         currentOutputSquiggle():pushPoint(outputPoint, outputThickness, discontinuity)
         currentOutputSquiggle():drawLastAddedSegment(precomputedOutputCtx, outputBounds)
@@ -193,9 +193,13 @@ end
 
 -- FIXME: update this when user zooms in or out
 local maxTolerableDistanceForInterp = outputBounds:pixelsToMeasurement(MAX_PIXEL_DISTANCE_BEFORE_INTERP)
-local function recursivelyPushPointsIfNeeded(depth, targetInputPoint, targetOutputPoint, endThickness)
-    if not targetOutputPoint or not endThickness then
-        targetOutputPoint, endThickness = calculateFuncAndThickness(targetInputPoint)
+-- local function recursivelyPushPointsIfNeeded(depth, targetInputPoint, targetOutputPoint, endThickness)
+local function recursivelyPushPointsIfNeeded(args)
+    local targetInputPoint = args.targetInputPoint or args[1]
+    local targetOutputPoint, endThickness, derivative = args.targetOutputPoint, args.endThickness, args.derivative
+    local depth = args.depth or 1
+    if not targetOutputPoint or not endThickness or not derivative then
+        targetOutputPoint, endThickness, derivative = calculateFunc(targetInputPoint)
     end
     if not currentOutputSquiggle():hasPoints() then
         return { pushPointPair(targetInputPoint, targetOutputPoint, endThickness, false) }
@@ -204,26 +208,31 @@ local function recursivelyPushPointsIfNeeded(depth, targetInputPoint, targetOutp
     local dist = (targetOutputPoint - currentOutputSquiggle():endPoint()):abs()
     local interpStart = currentInputSquiggle():endPoint()
     local interpEnd = targetInputPoint
-    if outputBounds:measurementToPixels(dist) >= MAX_PIXEL_DISTANCE_BEFORE_DISCONTINUITY then
-        return { pushPointPair(targetInputPoint, targetOutputPoint, endThickness, true) }
-    elseif dist >= maxTolerableDistanceForInterp and depth <= MAX_INTERP_TRIES then
+    if dist <= maxTolerableDistanceForInterp then
+        return { pushPointPair(targetInputPoint, targetOutputPoint, endThickness, false) }
+    elseif depth < MAX_INTERP_TRIES then
         local promises = {}
         for i = 1, INTERP_STEPS do
             local interpT = i / INTERP_STEPS
             local interpPoint = (1-interpT) * interpStart + interpT * interpEnd
-            local interpF, interpThickness = calculateFuncAndThickness(interpPoint)
-            table.insert(promises, recursivelyPushPointsIfNeeded(depth+1, interpPoint, interpF, interpThickness))
+            local interpF, interpThickness = calculateFunc(interpPoint)
+            table.insert(promises, recursivelyPushPointsIfNeeded{
+                interpPoint,
+                depth = depth+1,
+                targetOutputPoint = interpF,
+                endThickness = interpThickness,
+            })
         end
         -- FIXME: make promises work in order!
         -- TODO: replace promises with coroutine calls
         return promises
     else
-        return { pushPointPair(targetInputPoint, targetOutputPoint, endThickness, false) }
+        return { pushPointPair(targetInputPoint, targetOutputPoint, endThickness, true) }
     end
 end
 
 local function createNewMousePoint(x, y, c)
-    recursivelyPushPointsIfNeeded(1, c)
+    recursivelyPushPointsIfNeeded{ c }
     lastMouseX, lastMouseY = x, y
     markDirty()
 end
@@ -349,7 +358,7 @@ local function fullyRecalculate()
             startPath("prog", squiggle:startPoint(), squiggle.color, squiggle.defaultThickness)
             local i = 1
             for point in squiggle:tail() do
-                recursivelyPushPointsIfNeeded(1, point)
+                recursivelyPushPointsIfNeeded{ point }
                 if i % POINTS_PUSHED_PER_TICK == 0 then
                     coroutine.yield()
                 end
