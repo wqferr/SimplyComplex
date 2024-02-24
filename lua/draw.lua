@@ -8,7 +8,6 @@ local sd = _G.sd
 local CPath = require "complexpath"
 local Bounds = require "bounds"
 local Axes = require "axes"
-local promise = require "promise"
 require "constants"
 require "im-sd-bridge"
 
@@ -197,7 +196,6 @@ local function recursivelyPushPointsIfNeeded(args)
     if not targetOutputPoint or not endThickness or not derivative then
         targetOutputPoint, endThickness, derivative = calculateFunc(targetInputPoint)
     end
-    local prom = args.prom or promise(function(_, accept) accept() end)
     if not currentOutputSquiggle():hasPoints() then
         pushPointPair(targetInputPoint, targetOutputPoint, endThickness, false)
     end
@@ -218,7 +216,6 @@ local function recursivelyPushPointsIfNeeded(args)
                 targetOutputPoint = interpF,
                 endThickness = interpThickness,
                 derivative = interpDeriv,
-                prom = prom
             }
         end
     else
