@@ -187,7 +187,7 @@ local function pushPointPair(inputPoint, outputPoint, outputThickness, discontin
         end
         currentOutputSquiggle():pushPoint(outputPoint, outputThickness, discontinuity)
         currentOutputSquiggle():drawLastAddedSegment(precomputedOutputCtx, outputBounds)
-        accept()
+        -- accept()
     end)
 end
 
@@ -200,6 +200,7 @@ local function recursivelyPushPointsIfNeeded(args)
     if not targetOutputPoint or not endThickness or not derivative then
         targetOutputPoint, endThickness, derivative = calculateFunc(targetInputPoint)
     end
+    local prom = args.prom or promise(function() end)
     if not currentOutputSquiggle():hasPoints() then
         return { pushPointPair(targetInputPoint, targetOutputPoint, endThickness, false) }
     end
@@ -208,27 +209,27 @@ local function recursivelyPushPointsIfNeeded(args)
     local interpStart = currentInputSquiggle():endPoint()
     local interpEnd = targetInputPoint
     if dist <= maxTolerableDistanceForInterp then
-        return { pushPointPair(targetInputPoint, targetOutputPoint, endThickness, false) }
+        return { prom:and_then(pushPointPair(targetInputPoint, targetOutputPoint, endThickness, false)) }
     elseif depth < MAX_INTERP_TRIES then
-        local promises = {}
         for i = 1, INTERP_STEPS do
             local interpT = i / INTERP_STEPS
             local interpPoint = (1-interpT) * interpStart + interpT * interpEnd
             local interpF, interpThickness, interpDeriv = calculateFunc(interpPoint)
-            table.insert(promises, recursivelyPushPointsIfNeeded{
-                interpPoint,
-                depth = depth + 1,
-                targetOutputPoint = interpF,
-                endThickness = interpThickness,
-                derivative = interpDeriv
-            })
+            prom = prom:and_then(
+                recursivelyPushPointsIfNeeded{
+                    interpPoint,
+                    depth = depth + 1,
+                    targetOutputPoint = interpF,
+                    endThickness = interpThickness,
+                    derivative = interpDeriv,
+                    prom = prom
+                }
+            )
         end
-        -- FIXME: make promises work in order!
-        -- TODO: replace promises with coroutine calls
-        return promises
+        return prom
     else
         local inputDist = (targetInputPoint - currentInputSquiggle():endPoint()):abs()
-        return { pushPointPair(targetInputPoint, targetOutputPoint, endThickness, dist > 2 * derivative * inputDist) }
+        return { prom:and_then(pushPointPair(targetInputPoint, targetOutputPoint, endThickness, dist > 2 * derivative * inputDist)) }
     end
 end
 
