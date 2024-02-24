@@ -202,14 +202,14 @@ local function recursivelyPushPointsIfNeeded(args)
     end
     local prom = args.prom or promise(function() end)
     if not currentOutputSquiggle():hasPoints() then
-        return { pushPointPair(targetInputPoint, targetOutputPoint, endThickness, false) }
+        return pushPointPair(targetInputPoint, targetOutputPoint, endThickness, false)
     end
 
     local dist = (targetOutputPoint - currentOutputSquiggle():endPoint()):abs()
     local interpStart = currentInputSquiggle():endPoint()
     local interpEnd = targetInputPoint
     if dist <= maxTolerableDistanceForInterp then
-        return { prom:and_then(pushPointPair(targetInputPoint, targetOutputPoint, endThickness, false)) }
+        return prom:and_then(pushPointPair(targetInputPoint, targetOutputPoint, endThickness, false))
     elseif depth < MAX_INTERP_TRIES then
         for i = 1, INTERP_STEPS do
             local interpT = i / INTERP_STEPS
@@ -229,7 +229,7 @@ local function recursivelyPushPointsIfNeeded(args)
         return prom
     else
         local inputDist = (targetInputPoint - currentInputSquiggle():endPoint()):abs()
-        return { prom:and_then(pushPointPair(targetInputPoint, targetOutputPoint, endThickness, dist > 2 * derivative * inputDist)) }
+        return prom:and_then(pushPointPair(targetInputPoint, targetOutputPoint, endThickness, dist > 2 * derivative * inputDist))
     end
 end
 
