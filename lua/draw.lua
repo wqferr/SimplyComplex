@@ -178,17 +178,14 @@ local function shouldCreateNewMousePoint(x, y)
 end
 
 local function pushPointPair(inputPoint, outputPoint, outputThickness, discontinuity)
-    return promise(function(_, accept, reject)
-        currentInputSquiggle():pushPoint(inputPoint)
-        currentInputSquiggle():drawLastAddedSegment(precomputedInputCtx, inputBounds)
+    currentInputSquiggle():pushPoint(inputPoint)
+    currentInputSquiggle():drawLastAddedSegment(precomputedInputCtx, inputBounds)
 
-        if not outputPoint or not outputThickness then
-            outputPoint, outputThickness = calculateFunc(inputPoint)
-        end
-        currentOutputSquiggle():pushPoint(outputPoint, outputThickness, discontinuity)
-        currentOutputSquiggle():drawLastAddedSegment(precomputedOutputCtx, outputBounds)
-        -- accept()
-    end)
+    if not outputPoint or not outputThickness then
+        outputPoint, outputThickness = calculateFunc(inputPoint)
+    end
+    currentOutputSquiggle():pushPoint(outputPoint, outputThickness, discontinuity)
+    currentOutputSquiggle():drawLastAddedSegment(precomputedOutputCtx, outputBounds)
 end
 
 -- FIXME: update this when user zooms in or out
@@ -200,36 +197,33 @@ local function recursivelyPushPointsIfNeeded(args)
     if not targetOutputPoint or not endThickness or not derivative then
         targetOutputPoint, endThickness, derivative = calculateFunc(targetInputPoint)
     end
-    local prom = args.prom or promise(function() end)
+    local prom = args.prom or promise(function(_, accept) accept() end)
     if not currentOutputSquiggle():hasPoints() then
-        return pushPointPair(targetInputPoint, targetOutputPoint, endThickness, false)
+        pushPointPair(targetInputPoint, targetOutputPoint, endThickness, false)
     end
 
     local dist = (targetOutputPoint - currentOutputSquiggle():endPoint()):abs()
     local interpStart = currentInputSquiggle():endPoint()
     local interpEnd = targetInputPoint
     if dist <= maxTolerableDistanceForInterp then
-        return prom:and_then(pushPointPair(targetInputPoint, targetOutputPoint, endThickness, false))
+        pushPointPair(targetInputPoint, targetOutputPoint, endThickness, false)
     elseif depth < MAX_INTERP_TRIES then
         for i = 1, INTERP_STEPS do
             local interpT = i / INTERP_STEPS
             local interpPoint = (1-interpT) * interpStart + interpT * interpEnd
             local interpF, interpThickness, interpDeriv = calculateFunc(interpPoint)
-            prom = prom:and_then(
-                recursivelyPushPointsIfNeeded{
-                    interpPoint,
-                    depth = depth + 1,
-                    targetOutputPoint = interpF,
-                    endThickness = interpThickness,
-                    derivative = interpDeriv,
-                    prom = prom
-                }
-            )
+            recursivelyPushPointsIfNeeded{
+                interpPoint,
+                depth = depth + 1,
+                targetOutputPoint = interpF,
+                endThickness = interpThickness,
+                derivative = interpDeriv,
+                prom = prom
+            }
         end
-        return prom
     else
         local inputDist = (targetInputPoint - currentInputSquiggle():endPoint()):abs()
-        return prom:and_then(pushPointPair(targetInputPoint, targetOutputPoint, endThickness, dist > 2 * derivative * inputDist))
+        pushPointPair(targetInputPoint, targetOutputPoint, endThickness, dist > 2 * derivative * inputDist)
     end
 end
 
@@ -339,40 +333,30 @@ local function finishPath()
 end
 
 local lockUserInput = false
-local recalculateCoroutine = nil
-local recalcInterval = nil
-local function progressFullRecalc()
-    if recalculateCoroutine then
-        coroutine.resume(recalculateCoroutine)
-        redraw()
-    else
-        js.global:clearInterval(recalcInterval)
-        recalcInterval = nil
-    end
-end
 local function fullyRecalculate()
-    recalculateCoroutine = coroutine.create(function()
-        local oldInputSquiggles = inputSquiggles
-        inputSquiggles, outputSquiggles = {}, {}
-        redraw(true)
-        lockUserInput = true
-        for _, squiggle in ipairs(oldInputSquiggles) do
+    local oldInputSquiggles = inputSquiggles
+    inputSquiggles, outputSquiggles = {}, {}
+
+    -- TODO: setup loading animation
+    local prom = promise(function(_, accept) accept() end)
+
+    -- clear screen
+    redraw(true)
+    lockUserInput = true
+
+    for _, squiggle in ipairs(oldInputSquiggles) do
+        prom = prom:and_then(function()
             startPath("prog", squiggle:startPoint(), squiggle.color, squiggle.defaultThickness)
-            local i = 1
             for point in squiggle:tail() do
                 recursivelyPushPointsIfNeeded{ point }
-                if i % POINTS_PUSHED_PER_TICK == 0 then
-                    coroutine.yield()
-                end
-                i = i + 1
             end
             finishPath()
-        end
+        end)
+    end
+    prom:and_then(function()
         lockUserInput = false
         redraw(true)
-        recalculateCoroutine = nil
     end)
-    recalcInterval = js.global:setInterval(progressFullRecalc, 1)
 end
 
 local lastLoadedFunc
@@ -473,7 +457,7 @@ penSizeButtons:addEventListener("click", function(_, event)
     selectPenSize(_, event.target.parentElement)
 end)
 resizePenSizeCanvases()
-selectPenSize(_, penSizeButtons.children[1])
+selectPenSize(nil, penSizeButtons.children[1])
 
 strokeStyleComponent:addEventListener("change", function(_, event)
     strokeStyle = event.target.hex
