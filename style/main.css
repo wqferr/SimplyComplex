@@ -86,6 +86,10 @@ header > h1 {
     justify-content: center;
 }
 
+#func {
+    width: 100px;
+}
+
 #toolbar {
     display: flex;
 }
