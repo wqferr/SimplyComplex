@@ -148,7 +148,7 @@ header > h1 {
     margin-bottom: 1vh;
 }
 
-@media(min-width: 800px) {
+@media (min-width: 600px) and (orientation: landscape) {
     #boards {
         flex-direction: row;
     }
