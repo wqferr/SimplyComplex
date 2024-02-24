@@ -226,7 +226,8 @@ local function recursivelyPushPointsIfNeeded(args)
         -- TODO: replace promises with coroutine calls
         return promises
     else
-        return { pushPointPair(targetInputPoint, targetOutputPoint, endThickness, true) }
+        local inputDist = (targetInputPoint - currentInputSquiggle():endPoint()):abs()
+        return { pushPointPair(targetInputPoint, targetOutputPoint, endThickness, dist > 2 * derivative * inputDist) }
     end
 end
 
