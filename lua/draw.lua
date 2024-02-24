@@ -330,8 +330,41 @@ local function finishPath()
 end
 
 local lockUserInput = false
+
+local startSquiggleRecalc
+local squiggleRecalcTimeout
+local fullSquiggleSquiggleList
+local function doSquiggleRecalc(_, squiggleIndex)
+    local squiggle = fullSquiggleSquiggleList[squiggleIndex]
+    if not squiggle then
+        -- end recalculation
+        fullSquiggleSquiggleList = nil
+        lockUserInput = false
+        redraw(true)
+        return
+    end
+
+    startPath("prog", squiggle:startPoint(), squiggle.color, squiggle.defaultThickness)
+    for point in squiggle:tail() do
+        recursivelyPushPointsIfNeeded{ point }
+    end
+    finishPath()
+    redraw()
+    startSquiggleRecalc(squiggleIndex+1)
+end
+
+function startSquiggleRecalc(index)
+    squiggleRecalcTimeout = js.global:setTimeout(doSquiggleRecalc, 1, index)
+end
+
 local function fullyRecalculate()
-    local oldInputSquiggles = inputSquiggles
+    if squiggleRecalcTimeout then
+        js.global:clearTimeout(squiggleRecalcTimeout)
+        squiggleRecalcTimeout = nil
+    end
+    if not fullSquiggleSquiggleList then
+        fullSquiggleSquiggleList = inputSquiggles
+    end
     inputSquiggles, outputSquiggles = {}, {}
 
     -- TODO: setup loading animation
@@ -340,15 +373,18 @@ local function fullyRecalculate()
     redraw(true)
     lockUserInput = true
 
-    for _, squiggle in ipairs(oldInputSquiggles) do
-        startPath("prog", squiggle:startPoint(), squiggle.color, squiggle.defaultThickness)
-        for point in squiggle:tail() do
-            recursivelyPushPointsIfNeeded{ point }
-        end
-        finishPath()
-    end
-    lockUserInput = false
-    redraw(true)
+    -- setup cascade of squiggle recalcs
+    startSquiggleRecalc(1)
+
+    -- for _, squiggle in ipairs(oldInputSquiggles) do
+    --     startPath("prog", squiggle:startPoint(), squiggle.color, squiggle.defaultThickness)
+    --     for point in squiggle:tail() do
+    --         recursivelyPushPointsIfNeeded{ point }
+    --     end
+    --     finishPath()
+    -- end
+    -- lockUserInput = false
+    -- redraw(true)
 end
 
 local lastLoadedFunc
