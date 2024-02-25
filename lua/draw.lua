@@ -17,8 +17,8 @@ local document = js.global.document
 
 local inputCanvas = document:getElementById "inputBoard"
 local outputCanvas = document:getElementById "outputBoard"
-local precomputedInputCanvas = document:createElement "canvas"
-local precomputedOutputCanvas = document:createElement "canvas"
+-- local precomputedInputCanvas = document:createElement "canvas"
+-- local precomputedOutputCanvas = document:createElement "canvas"
 local toolbar = document:getElementById "toolbar"
 
 local inputCtx = inputCanvas:getContext "2d"
@@ -62,18 +62,9 @@ local outputBounds = Bounds.new(
     outputCanvas.height
 )
 
-local inputAxes = Axes(inputBounds, inputCanvas, inputCtx)
-local outputAxes = Axes(outputBounds, outputCanvas, outputCtx)
+local inputAxes = Axes(inputBounds, inputCtx)
+local outputAxes = Axes(outputBounds, outputCtx)
 
----@type ComplexPath[]
-local inputSquiggles = {}
----@type ComplexPath[]
-local outputSquiggles = {}
-
-local lineWidth
-
--- local lineWidthComponent = js.global.document:getElementById "strokeWidth"
--- lineWidthComponent.value = tostring(lineWidth)
 local strokeStyleComponent = document:getElementById "strokeColor"
 local strokeStyle = strokeStyleComponent.color
 
@@ -156,14 +147,6 @@ local function loadFunc(text)
         return nil, "Function did not change"
     end
     return result
-end
-
-local function calculateFunc(c)
-    ---@type Complex
-    local fc = func:evaluate(c)
-    local dz = func:derivative():evaluate(c):abs()
-    local originalThickness = lineWidth * STROKE_WIDTH_SCALING_FACTOR
-    return fc, originalThickness * dz, dz
 end
 
 local function pixelDist(x1, y1, x2, y2)
@@ -300,34 +283,6 @@ function redraw(recalculateOldPaths)
         drawOutputCursor()
     end
     shouldRedraw = false
-end
-
-local function startPath(mode, arg, color, thickness)
-    userDrawing = true
-
-    table.insert(inputSquiggles, CPath.new(color, thickness))
-    table.insert(outputSquiggles, CPath.new(color, thickness, MAX_PATH_THICKNESS))
-    if mode == "user" then
-        pushMousePoint(arg, true)
-        -- for single dots to show immediately
-        pushMousePoint(arg, true)
-    elseif mode == "prog" then
-        pushComplexPoint(arg, nil, nil, true)
-    else
-        error("Unknown startPath mode: " .. tostring(mode))
-    end
-end
-
-local function finishPath()
-    if currentInputSquiggle() then
-        local startX, startY = inputBounds:complexToPixel(currentInputSquiggle():startPoint())
-        local endX, endY = inputBounds:complexToPixel(currentInputSquiggle():endPoint())
-        local dist = pixelDist(startX, startY, endX, endY)
-        if dist <= CLOSE_PATH_DIST then
-            pushComplexPoint(currentInputSquiggle():startPoint(), nil, nil, true)
-        end
-    end
-    userDrawing = false
 end
 
 local lockUserInput = false

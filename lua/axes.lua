@@ -1,15 +1,18 @@
+---@module "axes"
 local M = {}
 
+---@class Axes
+---@field package ctx any
+---@field package bounds Bounds
 local Axes = {}
 local AxesMt = {__index = Axes}
 
 local TICK_WIDTH = 5.5
 
 setmetatable(M, {
-    __call = function(_, bounds, canvas, ctx)
+    __call = function(_, bounds, ctx)
         local axes = setmetatable({}, AxesMt)
         axes.bounds = bounds
-        axes.canvas = canvas
         axes.ctx = ctx
         return axes
     end,

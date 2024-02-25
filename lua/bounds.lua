@@ -3,10 +3,10 @@ local im = _G.im
 
 ---@class Bounds
 ---Represents a rectangular section of the complex plane
----@field private lowerLeft Complex lower left corner of the bounds
----@field private upperLeft Complex upper left corner of the bounds
----@field private upperRight Complex upper right corner of the bounds
----@field private lowerRight Complex lower right corner of the bounds
+---@field public lowerLeft Complex lower left corner of the bounds
+---@field public upperLeft Complex upper left corner of the bounds
+---@field public upperRight Complex upper right corner of the bounds
+---@field public lowerRight Complex lower right corner of the bounds
 ---@field private canvasWidth number canvas pixel width
 ---@field private canvasHeight number canvas pixel height
 local Bounds = {}
