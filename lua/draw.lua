@@ -8,6 +8,7 @@ local sd = _G.sd
 local CPath = require "complexpath"
 local Bounds = require "bounds"
 local Axes = require "axes"
+local thread = require "thread"
 require "constants"
 require "im-sd-bridge"
 
@@ -331,60 +332,59 @@ end
 
 local lockUserInput = false
 
-local startSquiggleRecalc
-local squiggleRecalcTimeout
-local fullSquiggleSquiggleList
-local function doSquiggleRecalc(_, squiggleIndex)
-    local squiggle = fullSquiggleSquiggleList[squiggleIndex]
-    if not squiggle then
-        -- end recalculation
-        fullSquiggleSquiggleList = nil
-        lockUserInput = false
-        redraw(true)
-        return
-    end
+local fullSquiggleList
+local function doSquiggleRecalc()
+    -- clear screen
+    redraw(true)
 
-    startPath("prog", squiggle:startPoint(), squiggle.color, squiggle.defaultThickness)
-    for point in squiggle:tail() do
-        recursivelyPushPointsIfNeeded{ point }
+    lockUserInput = true
+    for _, squiggle in ipairs(fullSquiggleList) do
+        if not squiggle then
+            -- end recalculation
+            fullSquiggleList = nil
+            lockUserInput = false
+            redraw(true)
+            return
+        end
+
+        startPath("prog", squiggle:startPoint(), squiggle.color, squiggle.defaultThickness)
+        local pointIndex = 1
+        for point in squiggle:tail() do
+            recursivelyPushPointsIfNeeded{ point }
+            if pointIndex % POINTS_REDRAWN_PER_YIELD == 0 then
+                redraw()
+                coroutine.yield()
+            end
+            pointIndex = pointIndex + 1
+        end
+        finishPath()
+        redraw()
+        coroutine.yield()
     end
-    finishPath()
-    redraw()
-    startSquiggleRecalc(squiggleIndex+1)
+    lockUserInput = false
+    fullSquiggleList = nil
 end
 
-function startSquiggleRecalc(index)
-    squiggleRecalcTimeout = js.global:setTimeout(doSquiggleRecalc, 1, index)
-end
+-- function startSquiggleRecalc(index)
+--     squiggleRecalcTimeout = js.global:setTimeout(doSquiggleRecalc, 0, index)
+-- end
 
+local recalcThread, abortRecalc
 local function fullyRecalculate()
-    if squiggleRecalcTimeout then
-        js.global:clearTimeout(squiggleRecalcTimeout)
-        squiggleRecalcTimeout = nil
+    if abortRecalc then
+        abortRecalc()
+        recalcThread = nil
+        abortRecalc = nil
     end
-    if not fullSquiggleSquiggleList then
-        fullSquiggleSquiggleList = inputSquiggles
+    if not fullSquiggleList then
+        fullSquiggleList = inputSquiggles
     end
     inputSquiggles, outputSquiggles = {}, {}
 
     -- TODO: setup loading animation
 
-    -- clear screen
-    redraw(true)
-    lockUserInput = true
-
-    -- setup cascade of squiggle recalcs
-    startSquiggleRecalc(1)
-
-    -- for _, squiggle in ipairs(oldInputSquiggles) do
-    --     startPath("prog", squiggle:startPoint(), squiggle.color, squiggle.defaultThickness)
-    --     for point in squiggle:tail() do
-    --         recursivelyPushPointsIfNeeded{ point }
-    --     end
-    --     finishPath()
-    -- end
-    -- lockUserInput = false
-    -- redraw(true)
+    recalcThread, abortRecalc = thread(doSquiggleRecalc)
+    recalcThread()
 end
 
 local lastLoadedFunc
