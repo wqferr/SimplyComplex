@@ -13,14 +13,16 @@ require "constants"
 ---@field package needsRedraw boolean
 ---@field package userDrawing boolean
 ---@field package userLocked boolean
+---@field package cursorTrackingEnabled boolean
 ---@field package inputCtx any
 ---@field package outputCtx any
 ---@field package inputSquiggles ComplexPath[]
 ---@field package outputSquiggles ComplexPath[]
 ---@field package inputAxes Axes
 ---@field package outputAxes Axes
+---@field package cursorMovePointPushThreshold number
 ---@field package maxTolerableDistanceForInterp number
----@field package lastCursorPosition {x: number, y: number}
+---@field package lastCursorPosition Complex
 local App = {}
 local AppMt = {__index = App}
 
@@ -57,8 +59,17 @@ function App.new(args)
     -- app:setOutputResolution(tonumber(app.outputCanvas.width), tonumber(app.outputCanvas.height))
     app.needsRedraw = false
     app.userDrawing = false
+    app.userLocked = false
+    app.cursorTrackingEnabled = false
     app.inputSquiggles, app.outputSquiggles = {}, {}
     return app
+end
+
+local function calculateFunc(app, point)
+    local fc = app.func:evaluate(point) --[[@as Complex]]
+    local dz = app:derivative():evaluate(point):abs()
+    local originalThickness = lineWidth * STROKE_WIDTH_SCALING_FACTOR
+    return fc, dz, originalThickness * dz
 end
 
 local function renderAxes(app)
@@ -67,18 +78,33 @@ local function renderAxes(app)
 end
 
 local function renderOutputCursor(app)
+    if not app.cursorTrackingEnabled or tostring(app.lastCursorPosition) == "nan" then
+        return
+    end
+    local x, y = app.outputBounds:complexToPixel(app.lastCursorPosition)
+    x, y = 0.5 + math.floor(x), 0.5 + math.floor(y)
+    app.outputCtx.strokeStyle = "#333"
+    app.outputCtx.lineWidth = 1
+
+    local armLength = (OUTPUT_HOVER_POINT_CROSS_SIZE - 1) / 2
+    app.outputCtx:moveTo(x - armLength, y)
+    app.outputCtx:lineTo(x + armLength, y)
+    app.outputCtx:moveTo(x, y - armLength)
+    app.outputCtx:lineTo(x, y + armLength)
+    app.outputCtx:stroke()
 end
 
-local function renderOldPathsToPrecomputedCanvas(ctx, squiggles, bounds)
+local function renderOldPathsToPrecomputedCanvas(ctx, squiggles, bounds, userCurrentlyDrawing)
     ctx:clearRect(0, 0, ctx.canvas.width, ctx.canvas.height)
     for _, squiggle in ipairs(squiggles) do
-        squiggle:draw(ctx, bounds)
+        squiggle:drawUpToLastSegment(ctx, bounds)
+        squiggle:drawLastSegment(ctx, bounds)
     end
 end
 
 local function renderOldPathsToPrecomputedCanvases(app)
-    renderOldPathsToPrecomputedCanvas(app.inputPrecomputedCtx, app.inputSquiggles, app.inputBounds)
-    renderOldPathsToPrecomputedCanvas(app.outputPrecomputedCtx, app.outputSquiggles, app.outputBounds)
+    renderOldPathsToPrecomputedCanvas(app.inputPrecomputedCtx, app.inputSquiggles, app.inputBounds, app:isUserDrawing())
+    renderOldPathsToPrecomputedCanvas(app.outputPrecomputedCtx, app.outputSquiggles, app.outputBounds, app:isUserDrawing())
 end
 
 local function renderPrecomputedCanvasesToRealThings(app)
@@ -87,6 +113,9 @@ local function renderPrecomputedCanvasesToRealThings(app)
 end
 
 local function render(app, recalcOldPaths)
+    if not app.needsRedraw then
+        return
+    end
     app.inputCtx:clearRect(0, 0, app.inputCtx.canvas.width, app.inputCtx.canvas.height)
     app.outputCtx:clearRect(0, 0, app.outputCtx.canvas.width, app.outputCtx.canvas.height)
     renderAxes(app)
@@ -95,8 +124,10 @@ local function render(app, recalcOldPaths)
     end
     renderPrecomputedCanvasesToRealThings(app)
     if app:isUserDrawing() then
-        -- TODO: render line from currentInputSquiggle():endPoint() to mouse position
-        -- TODO: render line from currentOutputSquiggle():endPoint() to f(mouse position)
+        app:currentInputSquiggle():drawVirtualSegment(app.inputCtx, app.inputBounds, app.lastCursorPosition)
+
+        local fLastCursorPosition = calculateFunc(app.lastCursorPosition)
+        app:currentOutputSquiggle():drawVirtualSegment(app.outputCtx, app.outputBounds, fLastCursorPosition)
     else
         renderOutputCursor(app)
     end
@@ -109,14 +140,6 @@ end
 
 local function pixelDist(x1, y1, x2, y2)
     return math.sqrt((x1 - x2)^2 + (y1 - y2)^2)
-end
-
-local function calculateFunc(app, point)
-    ---@type Complex
-    local fc = app.func:evaluate(point)
-    local dz = app:derivative():evaluate(point):abs()
-    local originalThickness = lineWidth * STROKE_WIDTH_SCALING_FACTOR
-    return fc, dz, originalThickness * dz
 end
 
 local function pushPointSimple(app, inputPoint, outputPoint, outputThickness, discontinuity)
@@ -173,7 +196,7 @@ end
 local function startPath(app, color, penSize, start)
     table.insert(app.inputSquiggles, CPath.new(color, penSize))
     table.insert(app.outputSquiggles, CPath.new(color, penSize, MAX_PATH_THICKNESS))
-    app:addPoint(start)
+    pushPointSimple(app, start)
 end
 
 function App:startDrawing(color, penSize, canvasX, canvasY)
@@ -181,29 +204,22 @@ function App:startDrawing(color, penSize, canvasX, canvasY)
     local startPoint = self.inputBounds:pixelToComplex(canvasX, canvasY)
     startPath(self, color, penSize, startPoint)
     -- push a new point so it becomes visible immediately and so we can manipulate the endpoint
-    self:addPoint(startPoint)
-end
-
----Append a point to the current path
----@param point any
-function App:addPoint(point)
-    if not self:isUserDrawing() or self:isUserInputLocked() then
-        return
-    end
-    recursivelyPushPointsIfNeeded(self, point)
+    pushPointSimple(self, startPoint)
 end
 
 function App:finishDrawing()
     if not self:isUserDrawing() or self:isUserInputLocked() then
         return
     end
-    if self:currentInputSquiggle() then
-        local startX, startY = self.inputBounds:complexToPixel(self:currentInputSquiggle():startPoint())
-        local endX, endY = self.inputBounds:complexToPixel(self:currentInputSquiggle():endPoint())
-        local dist = pixelDist(startX, startY, endX, endY)
-        if dist <= CLOSE_PATH_DIST then
-            self:addPoint(self:currentInputSquiggle():startPoint())
-        end
+
+    -- ensure cursor position gets commited to the actual path, not just as a virtual point
+    recursivelyPushPointsIfNeeded(self, self.lastCursorPosition)
+
+    local startX, startY = self.inputBounds:complexToPixel(self:currentInputSquiggle():startPoint())
+    local endX, endY = self.inputBounds:complexToPixel(self:currentInputSquiggle():endPoint())
+    local dist = pixelDist(startX, startY, endX, endY)
+    if dist <= CLOSE_PATH_DIST then
+        pushPointSimple(self, self:currentInputSquiggle():startPoint())
     end
     self.userDrawing = false
 end
@@ -246,6 +262,7 @@ function App:setInputBounds(bounds)
     if self.inputBounds then
         error("Changing bounds is not implemented yet", 2)
     end
+    self.cursorMovePointPushThreshold = self.inputBounds:pixelsToMeasurement(MAX_PIXEL_DISTANCE_BEFORE_PUSH_POINT)
     self.inputBounds = bounds
     self.inputAxes = Axes(self.inputBounds, self.inputCtx)
 end
@@ -268,12 +285,15 @@ function App:scheduleRedraw()
 end
 
 function App:updateCursorPosition(canvasX, canvasY)
-    self.lastCursorPosition.x, self.lastCursorPosition.y = canvasX, canvasY
-    -- TODO: MAYYYYYBE draw logic here? not sure
+    self.lastCursorPosition = self.inputBounds:pixelToComplex(canvasX, canvasY)
+    if self:isUserDrawing() and (self.lastCursorPosition - self:currentInputSquiggle():endPoint()):abs() > self.cursorMovePointPushThreshold then
+        recursivelyPushPointsIfNeeded(self, self.lastCursorPosition)
+    end
+    self:scheduleRedraw()
 end
 
-function App:resetCursorTracking()
-    self.lastCursorPosition.x, self.lastCursorPosition.y = nil, nil
+function App:setCursorTrackingEnabled(enabled)
+    self.cursorTrackingEnabled = enabled
 end
 
 return App

@@ -50,6 +50,16 @@ function ComplexPath:setDiscontinuityAtEndPoint()
     self.discontinuities[#self.points] = true
 end
 
+---Iterate through all but the first and last of the path's points
+---@return function iter the iterator
+function ComplexPath:nonEndPoints()
+    local i = 1
+    return function()
+        i = i + 1
+        return self.points[i+1] and self.points[i]
+    end
+end
+
 ---Iterate through all but the first of the path's points
 ---@return function iter the iterator
 function ComplexPath:tail()
@@ -93,11 +103,17 @@ function ComplexPath:hasPoints()
     return #self.points > 0
 end
 
----Draw the last segment in the Path
----@param ctx Context2D Drawing context
----@param bounds Bounds Bounds of the canvas
-function ComplexPath:drawLastAddedSegment(ctx, bounds)
-    self:drawSegment(ctx, bounds, #self.points - 1)
+local function drawSegment(ctx, bounds, segmentStart, segmentEnd, thickness, color)
+    if bounds:contains(segmentStart) or bounds:contains(segmentEnd) then
+        ctx.lineWidth = thickness
+        ctx.lineCap = "round"
+        ctx.strokeStyle = color
+
+        ctx:beginPath()
+        ctx:moveTo(bounds:complexToPixel(segmentStart))
+        ctx:lineTo(bounds:complexToPixel(segmentEnd))
+        ctx:stroke()
+    end
 end
 
 ---Draw a specific segment of the path.
@@ -108,19 +124,8 @@ function ComplexPath:drawSegment(ctx, bounds, idx)
     if idx < 1 or idx >= #self.points or self.discontinuities[idx+1] then
         return
     end
+    drawSegment(ctx, bounds, self.points[idx].point, self.points[idx+1].point, self.points[idx].thickness)
 
-    local segmentStart = self.points[idx].point
-    local segmentEnd = self.points[idx+1].point
-    if bounds:contains(segmentStart) or bounds:contains(segmentEnd) then
-        ctx.lineWidth = self.points[idx].thickness
-        ctx.lineCap = "round"
-        ctx.strokeStyle = self.color
-
-        ctx:beginPath()
-        ctx:moveTo(bounds:complexToPixel(segmentStart))
-        ctx:lineTo(bounds:complexToPixel(segmentEnd))
-        ctx:stroke()
-    end
 end
 
 function ComplexPath:endThickness()
@@ -137,10 +142,25 @@ function ComplexPath:setColor(color)
     self.color = color
 end
 
-function ComplexPath:draw(ctx, bounds)
-    for i = 1, #self.points - 1 do
+function ComplexPath:drawUpToLastSegment(ctx, bounds)
+    for i = 1, #self.points - 2 do
         self:drawSegment(ctx, bounds, i)
     end
+end
+
+---Draw the last segment in the Path
+---@param ctx Context2D Drawing context
+---@param bounds Bounds Bounds of the canvas
+function ComplexPath:drawLastSegment(ctx, bounds)
+    self:drawSegment(ctx, bounds, #self.points - 1)
+end
+
+function ComplexPath:drawVirtualSegment(ctx, bounds, newEndPoint)
+    if not self.points[1] then
+        return
+    end
+    local currentEndPoint = self.points[#self.points]
+    drawSegment(ctx, bounds, currentEndPoint.point, newEndPoint, currentEndPoint.thickness, self.color)
 end
 
 function ComplexPath:transform(expr)
