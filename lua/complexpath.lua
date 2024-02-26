@@ -103,11 +103,14 @@ function ComplexPath:hasPoints()
     return #self.points > 0
 end
 
-local function drawSegment(ctx, bounds, segmentStart, segmentEnd, thickness, color)
+local function prepareForDraw(ctx, color)
+    ctx.lineCap = "round"
+    ctx.strokeStyle = color
+end
+
+local function drawSegment(ctx, bounds, segmentStart, segmentEnd, thickness)
     if bounds:contains(segmentStart) or bounds:contains(segmentEnd) then
         ctx.lineWidth = thickness
-        ctx.lineCap = "round"
-        ctx.strokeStyle = color
 
         ctx:beginPath()
         ctx:moveTo(bounds:complexToPixel(segmentStart))
@@ -124,6 +127,7 @@ function ComplexPath:drawSegment(ctx, bounds, idx)
     if idx < 1 or idx >= #self.points or self.discontinuities[idx+1] then
         return
     end
+    prepareForDraw(ctx, self.color)
     drawSegment(ctx, bounds, self.points[idx].point, self.points[idx+1].point, self.points[idx].thickness)
 end
 
@@ -142,6 +146,7 @@ function ComplexPath:setColor(color)
 end
 
 function ComplexPath:drawUpToLastSegment(ctx, bounds)
+    prepareForDraw(ctx, self.color)
     for i = 1, #self.points - 2 do
         self:drawSegment(ctx, bounds, i)
     end
@@ -151,6 +156,7 @@ end
 ---@param ctx Context2D Drawing context
 ---@param bounds Bounds Bounds of the canvas
 function ComplexPath:drawLastSegment(ctx, bounds)
+    prepareForDraw(ctx, self.color)
     self:drawSegment(ctx, bounds, #self.points - 1)
 end
 
@@ -159,7 +165,8 @@ function ComplexPath:drawVirtualSegment(ctx, bounds, newEndPoint)
         return
     end
     local currentEndPoint = self.points[#self.points]
-    drawSegment(ctx, bounds, currentEndPoint.point, newEndPoint, currentEndPoint.thickness, self.color)
+    prepareForDraw(ctx, self.color)
+    drawSegment(ctx, bounds, currentEndPoint.point, newEndPoint, currentEndPoint.thickness)
 end
 
 function ComplexPath:transform(expr)

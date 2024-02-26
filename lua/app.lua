@@ -4,6 +4,7 @@ local js = require "js"
 
 local Axes = require "axes"
 local CPath = require "complexpath"
+local thread = require "thread"
 require "constants"
 
 ---@class App
@@ -26,6 +27,9 @@ require "constants"
 ---@field package maxTolerableDistanceForInterp number
 ---@field package lineWidthScalingFactor number
 ---@field package lastCursorPosition Complex
+---@field package recalcThread any
+---@field package recalcPause function
+---@field package recalcFullInputSquiggleList ComplexPath[]
 local App = {}
 local AppMt = {__index = App}
 
@@ -61,7 +65,7 @@ function App.new(args)
     -- do i need this?
     -- app:setInputResolution(tonumber(app.inputCanvas.width), tonumber(app.inputCanvas.height))
     -- app:setOutputResolution(tonumber(app.outputCanvas.width), tonumber(app.outputCanvas.height))
-    app.needsRedraw = false
+    app.needsRedraw = true
     app.userDrawing = false
     app.userLocked = false
     app.cursorTrackingEnabled = false
@@ -125,8 +129,8 @@ local function renderPrecomputedCanvasesToRealThings(app)
     app.outputCtx:drawImage(app.outputPrecomputedCtx.canvas, 0, 0)
 end
 
-local function render(app, recalcOldPaths)
-    if not app.needsRedraw then
+local function render(app, recalcOldPaths, forceRedraw)
+    if not app.needsRedraw and not forceRedraw then
         return
     end
     clearCtx(app.inputCtx)
@@ -137,10 +141,10 @@ local function render(app, recalcOldPaths)
     end
     renderPrecomputedCanvasesToRealThings(app)
     if app:isUserDrawing() then
-        app:currentInputSquiggle():drawVirtualSegment(app.inputCtx, app.inputBounds, app.lastCursorPosition)
+        app:lastInputSquiggle():drawVirtualSegment(app.inputCtx, app.inputBounds, app.lastCursorPosition)
 
-        local fLastCursorPosition = calculateFunc(app, app.lastCursorPosition, app:currentInputSquiggle():endThickness())
-        app:currentOutputSquiggle():drawVirtualSegment(app.outputCtx, app.outputBounds, fLastCursorPosition)
+        local fLastCursorPosition = calculateFunc(app, app.lastCursorPosition, app:lastInputSquiggle():endThickness())
+        app:lastOutputSquiggle():drawVirtualSegment(app.outputCtx, app.outputBounds, fLastCursorPosition)
     else
         renderOutputCursor(app)
     end
@@ -148,7 +152,7 @@ local function render(app, recalcOldPaths)
 end
 
 function App:render()
-    render(self, false)
+    render(self, false, false)
 end
 
 local function pixelDist(x1, y1, x2, y2)
@@ -162,14 +166,14 @@ end
 ---@param outputThickness number?
 ---@param discontinuity boolean?
 local function pushPointSimple(app, inputPoint, outputPoint, outputThickness, discontinuity)
-    app:currentInputSquiggle():pushPoint(inputPoint)
-    app:currentInputSquiggle():drawLastSegment(app.inputPrecomputedCtx, app.inputBounds)
+    app:lastInputSquiggle():pushPoint(inputPoint)
+    app:lastInputSquiggle():drawLastSegment(app.inputPrecomputedCtx, app.inputBounds)
 
     if not outputPoint or not outputThickness then
-        outputPoint, _, outputThickness = calculateFunc(app, inputPoint, app:currentInputSquiggle():endThickness())
+        outputPoint, _, outputThickness = calculateFunc(app, inputPoint, app:lastInputSquiggle():endThickness())
     end
-    app:currentOutputSquiggle():pushPoint(outputPoint, outputThickness, discontinuity)
-    app:currentOutputSquiggle():drawLastSegment(app.outputPrecomputedCtx, app.outputBounds)
+    app:lastOutputSquiggle():pushPoint(outputPoint, outputThickness, discontinuity)
+    app:lastOutputSquiggle():drawLastSegment(app.outputPrecomputedCtx, app.outputBounds)
 end
 
 ---Pushes as many points as necessary to make path smooth; detects discontinuities
@@ -180,14 +184,14 @@ local function recursivelyPushPointsIfNeeded(app, args)
     local targetOutputPoint, endThickness, derivative = args.targetOutputPoint, args.endThickness, args.derivative
     local depth = args.depth or 1
     if not targetOutputPoint or not endThickness or not derivative then
-        targetOutputPoint, endThickness, derivative = calculateFunc(app, targetInputPoint, app:currentInputSquiggle():endThickness())
+        targetOutputPoint, derivative, endThickness = calculateFunc(app, targetInputPoint, app:lastInputSquiggle():endThickness())
     end
-    if not app:currentOutputSquiggle():hasPoints() then
+    if not app:lastOutputSquiggle():hasPoints() then
         pushPointSimple(app, targetInputPoint, targetOutputPoint, endThickness, false)
     end
 
-    local dist = (targetOutputPoint - app:currentOutputSquiggle():endPoint()):abs()
-    local interpStart = app:currentInputSquiggle():endPoint()
+    local dist = (targetOutputPoint - app:lastOutputSquiggle():endPoint()):abs()
+    local interpStart = app:lastInputSquiggle():endPoint()
     local interpEnd = targetInputPoint
     if dist <= app.maxTolerableDistanceForInterp then
         pushPointSimple(app, targetInputPoint, targetOutputPoint, endThickness, false)
@@ -195,7 +199,7 @@ local function recursivelyPushPointsIfNeeded(app, args)
         for i = 1, INTERP_STEPS do
             local interpT = i / INTERP_STEPS
             local interpPoint = (1-interpT) * interpStart + interpT * interpEnd
-            local interpF, interpThickness, interpDeriv = calculateFunc(app, interpPoint, app:currentInputSquiggle():endThickness())
+            local interpF, interpDeriv, interpThickness = calculateFunc(app, interpPoint, app:lastInputSquiggle():endThickness())
             recursivelyPushPointsIfNeeded(
                 app,
                 {
@@ -208,7 +212,7 @@ local function recursivelyPushPointsIfNeeded(app, args)
             )
         end
     else
-        local inputDist = (targetInputPoint - app:currentInputSquiggle():endPoint()):abs()
+        local inputDist = (targetInputPoint - app:lastInputSquiggle():endPoint()):abs()
         pushPointSimple(app, targetInputPoint, targetOutputPoint, endThickness, dist > 2 * derivative * inputDist)
     end
 end
@@ -230,15 +234,14 @@ function App:clear()
     clearCtx(self.inputCtx)
     clearCtx(self.outputCtx)
     self.inputSquiggles, self.outputSquiggles = {}, {}
-    self:scheduleRedraw()
-    render(self, true)
+    render(self, true, true)
 end
 
 function App:removeLastSquiggle()
     table.remove(self.inputSquiggles)
     table.remove(self.outputSquiggles)
     self:scheduleRedraw()
-    render(self, true)
+    render(self, true, true)
 end
 
 function App:startDrawing(color, penSize, canvasX, canvasY)
@@ -260,11 +263,11 @@ function App:finishDrawing()
     -- ensure cursor position gets commited to the actual path, not just as a virtual point
     recursivelyPushPointsIfNeeded(self, { self.lastCursorPosition })
 
-    local startX, startY = self.inputBounds:complexToPixel(self:currentInputSquiggle():startPoint())
-    local endX, endY = self.inputBounds:complexToPixel(self:currentInputSquiggle():endPoint())
+    local startX, startY = self.inputBounds:complexToPixel(self:lastInputSquiggle():startPoint())
+    local endX, endY = self.inputBounds:complexToPixel(self:lastInputSquiggle():endPoint())
     local dist = pixelDist(startX, startY, endX, endY)
     if dist <= CLOSE_PATH_DIST then
-        pushPointSimple(self, self:currentInputSquiggle():startPoint())
+        pushPointSimple(self, self:lastInputSquiggle():startPoint())
     end
     self.userDrawing = false
 end
@@ -277,9 +280,17 @@ function App:isUserInputLocked()
     return self.userLocked
 end
 
+function App:lastInputSquiggle()
+    return self.inputSquiggles[#self.inputSquiggles]
+end
+
+function App:lastOutputSquiggle()
+    return self.outputSquiggles[#self.outputSquiggles]
+end
+
 function App:currentInputSquiggle()
     if self:isUserDrawing() then
-        return self.inputSquiggles[#self.inputSquiggles]
+        return self:lastInputSquiggle()
     else
         return nil
     end
@@ -287,27 +298,73 @@ end
 
 function App:currentOutputSquiggle()
     if self:isUserDrawing() then
-        return self.outputSquiggles[#self.outputSquiggles]
+        return self:lastOutputSquiggle()
     else
         return nil
     end
 end
 
-function App:setFunc(sdExpression)
+---@param app App
+---@param onDone function
+local function doSquiggleRecalc(app, onDone)
+    return function()
+        -- clear screen
+        render(app, true, true)
+
+        app.userLocked = true
+        for _, squiggle in ipairs(app.recalcFullInputSquiggleList) do
+            startPath(app, squiggle.color, squiggle.defaultThickness, squiggle:startPoint())
+            local pointIndex = 1
+            for point in squiggle:tail() do
+                recursivelyPushPointsIfNeeded(app, { point })
+                if pointIndex % POINTS_REDRAWN_PER_YIELD == 0 then
+                    render(app, false, true)
+                    coroutine.yield()
+                end
+                pointIndex = pointIndex + 1
+            end
+            -- finishPath is no longer a function, only users need to call it
+            -- to try to close the loop
+            render(app, false, true)
+            coroutine.yield()
+        end
+
+        app.userLocked = false
+        app.recalcThread, app.recalcPause, app.recalcFullInputSquiggleList = nil, nil, nil
+        onDone()
+    end
+end
+
+---Spawn a thread that recalculates all paths
+---@param app App
+---@param onDone function
+local function fullyRecalculate(app, onDone)
+    if not app.inputSquiggles[1] then
+        return
+    end
+    if app:isRecalculating() then
+        -- current recalc in progress, stop it and start over
+        app.recalcPause()
+        app.recalcPause, app.recalcThread = nil, nil
+    else
+        app.recalcFullInputSquiggleList = app.inputSquiggles
+    end
+    app.inputSquiggles, app.outputSquiggles = {}, {}
+    -- TODO: loading animation maybe
+    app.recalcThread, app.recalcPause = thread(doSquiggleRecalc(app, onDone))
+    app.recalcThread()
+end
+
+function App:isRecalculating()
+    return self.recalcThread ~= nil
+end
+
+function App:setFunc(sdExpression, onDoneRecalculating)
   if sdExpression == self.func then
         return
     end
     self.func = sdExpression
-    self:fullyRecalculate()
-end
-
--- use with care
-function App:fullyRecalculate()
-    if not self.inputSquiggles[1] then
-        return
-    end
-    -- TODO: spawn in thread
-    error("TODO", 2)
+    fullyRecalculate(self, onDoneRecalculating)
 end
 
 ---@param app App
@@ -350,7 +407,7 @@ end
 
 function App:updateCursorPosition(canvasX, canvasY)
     self.lastCursorPosition = self.inputBounds:pixelToComplex(canvasX, canvasY)
-    if self:isUserDrawing() and (self.lastCursorPosition - self:currentInputSquiggle():endPoint()):abs() > self.cursorMovePointPushThreshold then
+    if self:isUserDrawing() and (self.lastCursorPosition - self:lastInputSquiggle():endPoint()):abs() > self.cursorMovePointPushThreshold then
         recursivelyPushPointsIfNeeded(self, { self.lastCursorPosition })
     end
     self:scheduleRedraw()

@@ -6,8 +6,6 @@ _G.sd = require "symdiff"
 local im = _G.im
 local sd = _G.sd
 local Bounds = require "bounds"
-local Axes = require "axes"
-local thread = require "thread"
 local App = require "app"
 require "constants"
 require "im-sd-bridge"
@@ -18,11 +16,6 @@ local document = js.global.document
 local inputCanvas = document:getElementById "inputBoard"
 local outputCanvas = document:getElementById "outputBoard"
 local toolbar = document:getElementById "toolbar"
-
--- local inputCtx = inputCanvas:getContext "2d"
--- local outputCtx = outputCanvas:getContext "2d"
-
--- local mouseHoverOutputPoint = nil
 
 local penSizeButtons = document:getElementById "penSizeButtons"
 
@@ -69,8 +62,6 @@ local strokeStyle = strokeStyleComponent.color
 -- TODO: use [mathquill](https://github.com/mathquill/mathquill) instead of a raw text field.
 -- this will require parsing latex into a lua expression, which shouldnt be too bad
 local funcTextField = document:getElementById "func"
--- local func
--- local shouldRedraw
 
 local z = sd.var "z"
 local exportedValues = {
@@ -102,22 +93,6 @@ local exportedValues = {
     atanh = sd.atanh,
 }
 
-local lastMouseX, lastMouseY
--- local redraw
--- local userDrawing
-
--- local function currentInputSquiggle()
---     return inputSquiggles[#inputSquiggles]
--- end
-
--- local function currentOutputSquiggle()
---     return outputSquiggles[#outputSquiggles]
--- end
-
--- local function markDirty()
---     shouldRedraw = true
--- end
-
 local function loadFunc(text)
     if #text > 100 then
         return nil, "Input text too long, won't compile"
@@ -147,78 +122,6 @@ local function loadFunc(text)
     return result
 end
 
--- local function pixelDist(x1, y1, x2, y2)
---     return math.sqrt((x1 - x2)^2 + (y1 - y2)^2)
--- end
-
--- local function shouldCreateNewMousePoint(x, y)
---     if not lastMouseX or not lastMouseY then
---         return true
---     end
---     return pixelDist(x, y, lastMouseX, lastMouseY) > MIN_PIXEL_DIST_FOR_NEW_POINT
--- end
-
--- local function pushPointPair(inputPoint, outputPoint, outputThickness, discontinuity)
---     currentInputSquiggle():pushPoint(inputPoint)
---     currentInputSquiggle():drawLastAddedSegment(precomputedInputCtx, inputBounds)
---
---     if not outputPoint or not outputThickness then
---         outputPoint, outputThickness = calculateFunc(inputPoint)
---     end
---     currentOutputSquiggle():pushPoint(outputPoint, outputThickness, discontinuity)
---     currentOutputSquiggle():drawLastAddedSegment(precomputedOutputCtx, outputBounds)
--- end
-
--- FIXME: update this when user zooms in or out
-
--- local maxTolerableDistanceForInterp = outputBounds:pixelsToMeasurement(MAX_PIXEL_DISTANCE_BEFORE_INTERP)
--- local function recursivelyPushPointsIfNeeded(args)
---     local targetInputPoint = args.targetInputPoint or args[1]
---     local targetOutputPoint, endThickness, derivative = args.targetOutputPoint, args.endThickness, args.derivative
---     local depth = args.depth or 1
---     if not targetOutputPoint or not endThickness or not derivative then
---         targetOutputPoint, endThickness, derivative = calculateFunc(targetInputPoint)
---     end
---     if not currentOutputSquiggle():hasPoints() then
---         pushPointPair(targetInputPoint, targetOutputPoint, endThickness, false)
---     end
---
---     local dist = (targetOutputPoint - currentOutputSquiggle():endPoint()):abs()
---     local interpStart = currentInputSquiggle():endPoint()
---     local interpEnd = targetInputPoint
---     if dist <= maxTolerableDistanceForInterp then
---         pushPointPair(targetInputPoint, targetOutputPoint, endThickness, false)
---     elseif depth < MAX_INTERP_TRIES then
---         for i = 1, INTERP_STEPS do
---             local interpT = i / INTERP_STEPS
---             local interpPoint = (1-interpT) * interpStart + interpT * interpEnd
---             local interpF, interpThickness, interpDeriv = calculateFunc(interpPoint)
---             recursivelyPushPointsIfNeeded{
---                 interpPoint,
---                 depth = depth + 1,
---                 targetOutputPoint = interpF,
---                 endThickness = interpThickness,
---                 derivative = interpDeriv,
---             }
---         end
---     else
---         local inputDist = (targetInputPoint - currentInputSquiggle():endPoint()):abs()
---         pushPointPair(targetInputPoint, targetOutputPoint, endThickness, dist > 2 * derivative * inputDist)
---     end
--- end
-
--- local function createNewMousePoint(x, y, c)
---     recursivelyPushPointsIfNeeded{ c }
---     lastMouseX, lastMouseY = x, y
---     markDirty()
--- end
-
--- local function pushComplexPoint(c, x, y, forceNewPoint)
---     if forceNewPoint or shouldCreateNewMousePoint(x, y) then
---         createNewMousePoint(x, y, c)
---     end
--- end
-
 local function getEventCoords(event)
     if event.clientX then
         return event.clientX - inputCanvas.offsetLeft, event.clientY - inputCanvas.offsetTop
@@ -227,119 +130,6 @@ local function getEventCoords(event)
         return event.touches[0].clientX - inputCanvas.offsetLeft, event.touches[0].clientY - inputCanvas.offsetTop
     end
 end
-
--- local function pushMousePoint(event, forceNewPoint)
---     if not userDrawing then
---         return
---     end
---
---     local x, y = getEventCoords(event)
---     local c = inputBounds:pixelToComplex(x, y)
---     pushComplexPoint(c, x, y, forceNewPoint)
--- end
-
--- local function drawGuides()
---     inputAxes:draw()
---     outputAxes:draw()
--- end
--- drawGuides()
-
--- local function redrawOldPaths(canvas, ctx, paths, bounds)
---     ctx:clearRect(0, 0, canvas.width, canvas.height)
---     for _, squiggle in ipairs(paths) do
---         squiggle:draw(ctx, bounds)
---     end
--- end
-
--- local function drawOutputCursor()
---     if not mouseHoverOutputPoint or tostring(mouseHoverOutputPoint) == "nan" then
---         return
---     end
---     local x, y = outputBounds:complexToPixel(mouseHoverOutputPoint)
---     x, y = 0.5 + math.floor(x), 0.5 + math.floor(y)
---     outputCtx.strokeStyle = "#333"
---     outputCtx.lineWidth = 1
---
---     local armLength = (OUTPUT_HOVER_POINT_CROSS_SIZE - 1) / 2
---     outputCtx:moveTo(x - armLength, y)
---     outputCtx:lineTo(x + armLength, y)
---     outputCtx:moveTo(x, y - armLength)
---     outputCtx:lineTo(x, y + armLength)
---     outputCtx:stroke()
--- end
-
--- function redraw(recalculateOldPaths)
---     inputCtx:clearRect(0, 0, inputCanvas.width, inputCanvas.height)
---     outputCtx:clearRect(0, 0, outputCanvas.width, outputCanvas.height)
---     drawGuides()
---     if recalculateOldPaths then
---         redrawOldPaths(precomputedInputCanvas, precomputedInputCtx, inputSquiggles, inputBounds)
---         redrawOldPaths(precomputedOutputCanvas, precomputedOutputCtx, outputSquiggles, outputBounds)
---     end
---     inputCtx:drawImage(precomputedInputCanvas, 0, 0)
---     outputCtx:drawImage(precomputedOutputCanvas, 0, 0)
---     if not userDrawing then
---         drawOutputCursor()
---     end
---     shouldRedraw = false
--- end
-
--- local lockUserInput = false
-
--- local fullSquiggleList
--- local function doSquiggleRecalc()
---     -- clear screen
---     redraw(true)
---
---     lockUserInput = true
---     for _, squiggle in ipairs(fullSquiggleList) do
---         if not squiggle then
---             -- end recalculation
---             fullSquiggleList = nil
---             lockUserInput = false
---             redraw(true)
---             return
---         end
---
---         startPath("prog", squiggle:startPoint(), squiggle.color, squiggle.defaultThickness)
---         local pointIndex = 1
---         for point in squiggle:tail() do
---             recursivelyPushPointsIfNeeded{ point }
---             if pointIndex % POINTS_REDRAWN_PER_YIELD == 0 then
---                 redraw()
---                 coroutine.yield()
---             end
---             pointIndex = pointIndex + 1
---         end
---         finishPath()
---         redraw()
---         coroutine.yield()
---     end
---     lockUserInput = false
---     fullSquiggleList = nil
--- end
-
--- function startSquiggleRecalc(index)
---     squiggleRecalcTimeout = js.global:setTimeout(doSquiggleRecalc, 0, index)
--- end
-
--- local recalcThread, abortRecalc
--- local function fullyRecalculate()
---     if abortRecalc then
---         abortRecalc()
---         recalcThread = nil
---         abortRecalc = nil
---     end
---     if not fullSquiggleList then
---         fullSquiggleList = inputSquiggles
---     end
---     inputSquiggles, outputSquiggles = {}, {}
---
---     -- TODO: setup loading animation
---
---     recalcThread, abortRecalc = thread(doSquiggleRecalc)
---     recalcThread()
--- end
 
 local lastLoadedFunc
 local function updateFuncToLuaExpression(luaExpr)
@@ -376,27 +166,18 @@ js.global:setInterval(function()
     end
 end, 1000)
 
+local periodOf60Hz = math.floor(1000 / 60)
 local function renderApp()
     app:render()
-    js.global:setTimeout(renderApp, 1000 / 60)
+    js.global:setTimeout(renderApp, periodOf60Hz)
 end
 renderApp()
 
 toolbar:addEventListener("click", function(_, event)
     if event.target.id == "clear" then
         app:clear()
-        -- precomputedInputCtx:clearRect(0, 0, precomputedInputCanvas.width, precomputedInputCanvas.height)
-        -- precomputedOutputCtx:clearRect(0, 0, precomputedOutputCanvas.width, precomputedOutputCanvas.height)
-        -- inputCtx:clearRect(0, 0, inputCanvas.width, inputCanvas.height)
-        -- outputCtx:clearRect(0, 0, outputCanvas.width, outputCanvas.height)
-        -- inputSquiggles = {}
-        -- outputSquiggles = {}
-        -- drawGuides()
     elseif event.target.id == "undo" then
         app:removeLastSquiggle()
-        -- table.remove(inputSquiggles)
-        -- table.remove(outputSquiggles)
-        -- redraw(true)
     end
 end)
 
@@ -458,23 +239,12 @@ end)
 local function userStartPath(_, event)
     local cx, cy = getEventCoords(event)
     app:startDrawing(strokeStyle, lineWidth, cx, cy)
-    -- if lockUserInput then
-    --     return
-    -- end
-    -- startPath("user", event, strokeStyle, lineWidth)
 end
 inputCanvas:addEventListener("touchstart", userStartPath, {passive = false})
 inputCanvas:addEventListener("mousedown", userStartPath)
 
 local function userFinishPath(_, mouseEvent)
     app:finishDrawing()
-    -- if lockUserInput then
-    --     return
-    -- end
-    -- if mouseEvent then
-    --     pushMousePoint(mouseEvent, true)
-    -- end
-    -- finishPath()
 end
 inputCanvas:addEventListener("mouseup", userFinishPath)
 inputCanvas:addEventListener("touchend", function(_) userFinishPath(nil, nil) end)
@@ -483,15 +253,6 @@ inputCanvas:addEventListener("mouseout", userFinishPath)
 local function cursorMove(_, event)
     local cx, cy = getEventCoords(event)
     app:updateCursorPosition(cx, cy)
-    -- markDirty()
-    -- local mx, my = getEventCoords(event)
-    -- mouseHoverOutputPoint = inputBounds:pixelToComplex(mx, my)
-    -- mouseHoverOutputPoint = func:evaluate(mouseHoverOutputPoint)
-    -- if not userDrawing or lockUserInput then
-    --     return
-    -- end
-    --
-    -- pushMousePoint(event)
 end
 inputCanvas:addEventListener("mousemove", cursorMove)
 
@@ -501,17 +262,6 @@ inputCanvas:addEventListener("touchmove", function(_, event)
 end, {passive = false})
 
 local function functTextInputChange()
-    -- if lockUserInput then
-    --     return
-    -- end
     loadFuncFromTextField()
 end
 funcTextField:addEventListener("input", functTextInputChange)
-
-local function redrawIfDirty()
-    if shouldRedraw then
-        redraw()
-    end
-end
-
-js.global:setInterval(redrawIfDirty, 1000 / 60)
