@@ -102,4 +102,8 @@ function Bounds:pixelsToMeasurement(pixels)
     return d.real
 end
 
+function Bounds:area()
+    return (self.upperRight - self.upperLeft).real * (self.lowerLeft - self.upperLeft).imag
+end
+
 return Bounds

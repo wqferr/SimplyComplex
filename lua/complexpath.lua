@@ -125,7 +125,6 @@ function ComplexPath:drawSegment(ctx, bounds, idx)
         return
     end
     drawSegment(ctx, bounds, self.points[idx].point, self.points[idx+1].point, self.points[idx].thickness)
-
 end
 
 function ComplexPath:endThickness()
