@@ -28,6 +28,7 @@ require "constants"
 ---@field package lineWidthScalingFactor number
 ---@field package lastCursorPosition Complex
 ---@field package funcLastCursorPosition Complex
+---@field package derivLastCursorPosition number
 ---@field package recalcThread any
 ---@field package recalcPause function
 ---@field package recalcFullInputSquiggleList ComplexPath[]
@@ -134,6 +135,14 @@ local function renderPrecomputedCanvasesToRealThings(app)
     app.outputCtx:drawImage(app.outputPrecomputedCtx.canvas, 0, 0)
 end
 
+---@param inputDist number
+---@param outputDist number
+---@param derivativeAtStart number
+---@return boolean
+local function isDiscontinuity(inputDist, outputDist, derivativeAtStart)
+    return outputDist > 2*derivativeAtStart*inputDist
+end
+
 ---@param app App
 ---@param recalcOldPaths boolean
 ---@param forceRerender boolean
@@ -149,10 +158,12 @@ local function render(app, recalcOldPaths, forceRerender)
     end
     renderPrecomputedCanvasesToRealThings(app)
     if app:isUserDrawing() then
-        app:lastInputSquiggle():drawVirtualSegment(app.inputCtx, app.inputBounds, app.lastCursorPosition)
-
-        -- TODO: heuristically detect discontinuities before drawing output virtual segment
-        app:lastOutputSquiggle():drawVirtualSegment(app.outputCtx, app.outputBounds, app.funcLastCursorPosition)
+        local inputDist = (app.lastCursorPosition - app:currentInputSquiggle():endPoint()):abs()
+        local outputDist = (app.funcLastCursorPosition - app:currentOutputSquiggle():endPoint()):abs()
+        if not isDiscontinuity(inputDist, outputDist, app.derivLastCursorPosition) then
+            app:lastInputSquiggle():drawVirtualSegment(app.inputCtx, app.inputBounds, app.lastCursorPosition)
+            app:lastOutputSquiggle():drawVirtualSegment(app.outputCtx, app.outputBounds, app.funcLastCursorPosition)
+        end
     else
         renderOutputCursor(app)
     end
@@ -222,7 +233,7 @@ local function recursivelyPushPointsIfNeeded(app, args)
         end
     else
         local inputDist = (targetInputPoint - app:lastInputSquiggle():endPoint()):abs()
-        pushPointSimple(app, targetInputPoint, targetOutputPoint, endThickness, dist > 2 * derivative * inputDist)
+        pushPointSimple(app, targetInputPoint, targetOutputPoint, endThickness, isDiscontinuity(inputDist, dist, derivative))
     end
 end
 
@@ -231,7 +242,7 @@ end
 ---@param canvasY number
 local function setLastCursorPosition(app, canvasX, canvasY)
     app.lastCursorPosition = app.inputBounds:pixelToComplex(canvasX, canvasY)
-    app.funcLastCursorPosition = calculateFunc(app, app.lastCursorPosition)
+    app.funcLastCursorPosition, app.derivLastCursorPosition = calculateFunc(app, app.lastCursorPosition)
 end
 
 ---Create new Path (for internal use only)

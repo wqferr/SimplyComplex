@@ -19,22 +19,6 @@ local toolbar = document:getElementById "toolbar"
 
 local penSizeButtons = document:getElementById "penSizeButtons"
 
-local function setCanvasSize(canvas)
-    local style = js.global:getComputedStyle(canvas.parentNode)
-    local width = style:getPropertyValue "width":gsub("px", "")
-    local height = style:getPropertyValue "height":gsub("px", "")
-    width = math.floor(math.min(tonumber(width) or 0, tonumber(height) or 0))
-    canvas.width = width
-    canvas.height = width
-end
-
-local function copyCanvasSize(from, to)
-    to.width = from.width
-    to.height = from.height
-end
-setCanvasSize(inputCanvas)
-copyCanvasSize(inputCanvas, outputCanvas)
-
 local inputBounds = Bounds.new(
     im(INPUT_MIN[1], INPUT_MIN[2]),
     im(INPUT_MAX[1], INPUT_MAX[2]),
