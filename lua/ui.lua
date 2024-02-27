@@ -116,7 +116,7 @@ local function loadFunc(text)
     if not ok then
         return nil, result
     end
-    if tostring(result) == tostring(func) then
+    if tostring(result) == tostring(app:getFunc()) then
         return nil, "Function did not change"
     end
     return result
@@ -166,7 +166,7 @@ js.global:setInterval(function()
     end
 end, 1000)
 
-local periodOf60Hz = math.floor(1000 / 60)
+local periodOf60Hz = 1000 / 60
 local function renderApp()
     app:render()
     js.global:setTimeout(renderApp, periodOf60Hz)
@@ -243,12 +243,20 @@ end
 inputCanvas:addEventListener("touchstart", userStartPath, {passive = false})
 inputCanvas:addEventListener("mousedown", userStartPath)
 
-local function userFinishPath(_, mouseEvent)
+local function userFinishPath(enableTracking)
     app:finishDrawing()
+    app:setCursorTrackingEnabled(enableTracking)
 end
-inputCanvas:addEventListener("mouseup", userFinishPath)
-inputCanvas:addEventListener("touchend", function(_) userFinishPath(nil, nil) end)
-inputCanvas:addEventListener("mouseout", userFinishPath)
+
+inputCanvas:addEventListener("mouseup", function()
+    userFinishPath(true)
+end)
+inputCanvas:addEventListener("touchend", function()
+    userFinishPath(false)
+end)
+inputCanvas:addEventListener("mouseout", function()
+    userFinishPath(false)
+end)
 
 local function cursorMove(_, event)
     local cx, cy = getEventCoords(event)
