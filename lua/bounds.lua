@@ -65,6 +65,9 @@ end
 ---@return number x x coordinate of the corresponding canvas point
 ---@return number y y coordinate of the corresponding canvas point
 function Bounds:complexToPixel(c)
+    if not c then
+        error("Point cannot be nil", 2)
+    end
     local x = inverseLerp(self.upperLeft.real, self.upperRight.real, c.real)
     local y = inverseLerp(self.upperLeft.imag, self.lowerLeft.imag, c.imag)
     x, y = x * self.canvasWidth, y * self.canvasHeight

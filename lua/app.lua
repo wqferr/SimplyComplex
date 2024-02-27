@@ -226,15 +226,23 @@ local function recursivelyPushPointsIfNeeded(app, args)
     end
 end
 
+---@param app App
+---@param canvasX number
+---@param canvasY number
+local function setLastCursorPosition(app, canvasX, canvasY)
+    app.lastCursorPosition = app.inputBounds:pixelToComplex(canvasX, canvasY)
+    app.funcLastCursorPosition = calculateFunc(app, app.lastCursorPosition)
+end
+
 ---Create new Path (for internal use only)
 ---@param app App
 ---@param color string
 ---@param penSize number
 ---@param start Complex
-local function startPath(app, color, penSize, start)
+local function startPath(app, color, penSize, start, funcStart)
     table.insert(app.inputSquiggles, CPath.new(color, penSize))
     table.insert(app.outputSquiggles, CPath.new(color, penSize, MAX_PATH_THICKNESS))
-    pushPointSimple(app, start)
+    pushPointSimple(app, start, funcStart)
 end
 
 function App:clear()
@@ -258,8 +266,8 @@ function App:startDrawing(color, penSize, canvasX, canvasY)
         return
     end
     self.userDrawing = true
-    local startPoint = self.inputBounds:pixelToComplex(canvasX, canvasY)
-    startPath(self, color, penSize, startPoint)
+    setLastCursorPosition(self, canvasX, canvasY)
+    startPath(self, color, penSize, self.lastCursorPosition, self.funcLastCursorPosition)
 end
 
 function App:finishDrawing()
@@ -410,8 +418,7 @@ function App:setOutputBounds(bounds)
 end
 
 function App:updateCursorPosition(canvasX, canvasY)
-    self.lastCursorPosition = self.inputBounds:pixelToComplex(canvasX, canvasY)
-    self.funcLastCursorPosition = calculateFunc(self, self.lastCursorPosition)
+    setLastCursorPosition(self, canvasX, canvasY)
     if self:isUserDrawing() and (self.lastCursorPosition - self:lastInputSquiggle():endPoint()):abs() > self.cursorMovePointPushThreshold then
         recursivelyPushPointsIfNeeded(self, { self.lastCursorPosition })
     end

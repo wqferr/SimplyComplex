@@ -108,7 +108,18 @@ local function prepareForDraw(ctx, color)
     ctx.strokeStyle = color
 end
 
+local function checkNilArg(value, name)
+    if not value then
+        error(("Argument %s cannot be nil"):format(name), 3)
+    end
+end
+
 local function drawSegment(ctx, bounds, segmentStart, segmentEnd, thickness)
+    checkNilArg(ctx, "ctx")
+    checkNilArg(bounds, "bounds")
+    checkNilArg(segmentStart, "segmentStart")
+    checkNilArg(segmentEnd, "segmentEnd")
+    checkNilArg(thickness, "thickness")
     if bounds:contains(segmentStart) or bounds:contains(segmentEnd) then
         ctx.lineWidth = thickness
 
@@ -161,7 +172,10 @@ function ComplexPath:drawLastSegment(ctx, bounds)
 end
 
 function ComplexPath:drawVirtualSegment(ctx, bounds, newEndPoint)
-    if not self.points[1] then
+    checkNilArg(ctx, "ctx")
+    checkNilArg(bounds, "bounds")
+    checkNilArg(newEndPoint, "newEndPoint")
+    if not self:hasPoints() then
         return
     end
     local currentEndPoint = self.points[#self.points]
@@ -169,14 +183,14 @@ function ComplexPath:drawVirtualSegment(ctx, bounds, newEndPoint)
     drawSegment(ctx, bounds, currentEndPoint.point, newEndPoint, currentEndPoint.thickness)
 end
 
-function ComplexPath:transform(expr)
-    local p = ComplexPath.new(self.color, self.defaultThickness)
-    for _, pointInfo in ipairs(self.points) do
-        local point = pointInfo.point
-        local originalThickness = self:endThickness() * OUTPUT_AREA / INPUT_AREA
-        p:pushPoint(expr:evaluate(point), expr:derivative(point):abs() * originalThickness)
-    end
-    return p
-end
+-- function ComplexPath:transform(expr)
+--     local p = ComplexPath.new(self.color, self.defaultThickness)
+--     for _, pointInfo in ipairs(self.points) do
+--         local point = pointInfo.point
+--         local originalThickness = self:endThickness() * OUTPUT_AREA / INPUT_AREA
+--         p:pushPoint(expr:evaluate(point), expr:derivative(point):abs() * originalThickness)
+--     end
+--     return p
+-- end
 
 return ComplexPath
