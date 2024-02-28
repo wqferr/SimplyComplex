@@ -263,7 +263,10 @@ local function cursorMove(_, event)
     local cx, cy = getEventCoords(event)
     app:updateCursorPosition(cx, cy)
 end
-inputCanvas:addEventListener("mousemove", cursorMove)
+inputCanvas:addEventListener("mousemove", function(_, event)
+    cursorMove(_, event)
+    app:setCursorTrackingEnabled(true)
+end)
 
 inputCanvas:addEventListener("touchmove", function(_, event)
     cursorMove(nil, event)
