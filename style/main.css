@@ -30,14 +30,15 @@ header > h1 {
     margin: 0 1em;
 }
 
-.flex-centered-col {
+#logos {
     display: flex;
-    flex-direction: column;
     justify-content: center;
+    align-items: center;
+    gap: 20px;
 }
 
-.flex-align-nostretch {
-    align-items: center;
+#gitHubMark {
+    height: 42px;
 }
 
 #boards {

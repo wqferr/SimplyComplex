@@ -293,6 +293,7 @@ function App:finishDrawing()
     local endX, endY = self.inputBounds:complexToPixel(self:lastInputSquiggle():endPoint())
     local dist = pixelDist(startX, startY, endX, endY)
     if dist <= CLOSE_PATH_DIST then
+        -- TODO: dont close path if it's a discontinuity
         pushPointSimple(self, self:lastInputSquiggle():startPoint())
     end
     self.userDrawing = false
