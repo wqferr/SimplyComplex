@@ -111,11 +111,18 @@ local function loadFunc(text)
         reportError(result)
         return nil
     end
-    if tostring(result) == tostring(app:getFunc()) then
+    if result == nil then
+        reportError "Nil expression"
         return nil
     end
+
     clearError()
-    return result
+    if tostring(result) == tostring(app:getFunc()) then
+        -- function didnt change, only minor edits (like removing whitespace)
+        return nil
+    else
+        return result
+    end
 end
 
 local function getPageScroll()
