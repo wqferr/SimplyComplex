@@ -160,6 +160,42 @@
                 path width will visibly decrease when it gets closer to the origin, eventually disappearing.
                 </p>
             </section>
+
+            <section id="usage">
+                <h3>Usage</h3>
+                <p>
+                Internally, the function text field is evaluated in a Lua context with some variables predefined.
+                This means you are essentially creating a very very short piece of Lua code, that is run for
+                every point in the paths you draw.
+                </p>
+                <p>
+                The variables you are allowed to use are:
+                <ul class="dash-list">
+                    <li>z: a placeholder for whichever point is currently being evaluated;</li>
+                    <li>i: the imaginary unit;</li>
+                    <li>e: the base of the natural logarithm;</li>
+                    <li>pi: the circle constant;</li>
+                    <li>tau: the superior circle constant.</li>
+                </ul>
+                </p>
+                <p>
+                The Lua environment is also equipped with several functions. They are:
+                <ul class="dash-list">
+                    <li>real: real part of its argument;</li>
+                    <li>imag: imaginary part of its argument;</li>
+                    <li>conj: conjugate of its argument;</li>
+                    <li>exp: exponential function, base e;</li>
+                    <li>ln: natural logarithm (principal branch);</li>
+                    <li>sqrt: square root (principal value);</li>
+                    <li>abs: absolute value;</li>
+                    <li>arg: argument or phase;</li>
+                    <li>sin, cos, tan: circular trigonometric functions;</li>
+                    <!-- <li>asin, acos, atan: inverse circular trigonometric functions;</li> -->
+                    <li>sinh, cosh, tanh: hyperbolic trigonometric functions;</li>
+                    <!-- <li>arsinh, arcosh, artanh: inverse hyperbolic trigonometric functions.</li> -->
+                </ul>
+                </p>
+            </section>
         </article>
         <script type="text/javascript" src="js/render-math.js"></script>
         <script type="text/javascript" src="js/embed-youtube-on-scroll.js" async></script>

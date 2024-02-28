@@ -14,7 +14,7 @@ local im = _G.im
 
 local replacedFuncs = {
     "exp",
-    ["ln"] = "log",
+    "ln",
     "sqrt",
     "sin",
     "cos",
@@ -30,6 +30,8 @@ for k, v in pairs(replacedFuncs) do
         sd[k].func = im[v]
     end
 end
+
+-- TODO: fix hyperbolic trig functions
 
 local one = sd.const(im.one)
 local constOne = sd.func(function() return one end)
