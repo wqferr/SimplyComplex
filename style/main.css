@@ -149,6 +149,17 @@ header > h1 {
     height: 100%;
 }
 
+/* Chrome check, since it doesn't properly darken buttons on hover and click */
+@media screen and (-webkit-min-device-pixel-ratio: 0) {
+    .darken-on-hover:hover {
+        filter: brightness(80%);
+    }
+
+    .darken-on-hover:active {
+        filter: brightness(50%);
+    }
+}
+
 #clear {
     background-image: url(../svg/trash-svgrepo-com.svg);
 }
