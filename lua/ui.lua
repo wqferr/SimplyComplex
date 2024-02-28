@@ -106,13 +106,30 @@ local function loadFunc(text)
     return result
 end
 
+local function getPageScroll()
+    if js.global.pageYOffset then
+        return js.global.pageXOffset, js.global.pageYOffset
+    elseif js.global.document.documentElement and js.global.document.documentElement.scrollTop then
+        return js.global.document.documentElement.scrollLeft, js.global.document.documentElement.scrollTop
+    elseif js.global.document.body.scrollTop then
+        return js.global.document.body.scrollLeft, js.global.document.body.scrollTop
+    else
+        return 0, 0
+    end
+end
+
 local function getEventCoords(event)
+    local x, y
     if event.clientX then
-        return event.clientX - inputCanvas.offsetLeft, event.clientY - inputCanvas.offsetTop
+        x, y = event.clientX, event.clientY
     else
         -- TODO: multiple touches?
-        return event.touches[0].clientX - inputCanvas.offsetLeft, event.touches[0].clientY - inputCanvas.offsetTop
+        x, y = event.touches[0].clientX, event.touches[0].clientY
     end
+    local scrollX, scrollY = getPageScroll()
+    x = x + scrollX - inputCanvas.offsetLeft
+    y = y + scrollY - inputCanvas.offsetTop
+    return x, y
 end
 
 local lastLoadedFunc
