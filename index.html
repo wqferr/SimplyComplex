@@ -47,10 +47,13 @@
                     <canvas id="inputBoard"></canvas>
                 </div>
                 <div id="arrowParent">
-                    <div id="funcForm">
+                    <form id="funcForm">
                         <label for="func">𝑓(𝑧)&nbsp;=&nbsp;</label>
-                        <input type="text" name="func" id="func">
-                    </div>
+                        <div id="textFieldPlusErrorMessage">
+                            <input type="text" name="func" id="func">
+                            <span id="errorText"></span>
+                        </div>
+                    </form>
                     <div id="arrow">
                         <canvas id="arrowCanvas"></canvas>
                     </div>

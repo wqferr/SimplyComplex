@@ -85,10 +85,31 @@ header > h1 {
     display: flex;
     flex-direction: row;
     justify-content: center;
+    align-items: baseline;
 }
 
 #func {
-    width: 100px;
+    display: block;
+    width: 100%;
+}
+
+#textFieldPlusErrorMessage {
+    width: 150px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+#errorText {
+    color: #a33;
+    display: block;
+    max-width: inherit;
+    height: 3ex;
+    font-size: 60%;
+    line-height: 0.8;
+    margin: 5px 0;
+    text-align: center;
+    overflow-wrap: anywhere;
 }
 
 #toolbar {

@@ -77,6 +77,15 @@ local exportedValues = {
     atanh = sd.atanh,
 }
 
+local errorTextBox = js.global.document:getElementById "errorText"
+local function reportError(message)
+    errorTextBox.innerText = message
+end
+
+local function clearError()
+    errorTextBox.innerText = ""
+end
+
 local function loadFunc(text)
     if #text > 100 then
         return nil, "Input text too long, won't compile"
@@ -94,15 +103,18 @@ local function loadFunc(text)
 
     local chunk = load("return "..text, "user function", "t", exportedValues)
     if not chunk then
-        return nil, "Could not compile"
+        reportError "Could not compile"
+        return nil
     end
     local ok, result = pcall(chunk)
     if not ok then
-        return nil, result
+        reportError(result)
+        return nil
     end
     if tostring(result) == tostring(app:getFunc()) then
-        return nil, "Function did not change"
+        return nil
     end
+    clearError()
     return result
 end
 
@@ -134,7 +146,7 @@ end
 
 local lastLoadedFunc
 local function updateFuncToLuaExpression(luaExpr)
-    local newFunc, reason = loadFunc(luaExpr)
+    local newFunc = loadFunc(luaExpr)
     if newFunc then
         if type(newFunc) == "number" then
             newFunc = im.asComplex(newFunc)
@@ -145,11 +157,10 @@ local function updateFuncToLuaExpression(luaExpr)
         if sd.isExpression(newFunc) then
             lastLoadedFunc = luaExpr
             app:setFunc(newFunc)
+            clearError()
         else
-            print("Incomplete expression")
+            reportError "Incomplete expression"
         end
-    else
-        print(reason)
     end
 end
 
@@ -226,7 +237,7 @@ local function selectPenSize(_, button)
 end
 penSizeButtons:addEventListener("click", function(_, event)
     -- event target is canvas element inside button
-    selectPenSize(_, event.target.parentElement)
+    selectPenSize(nil, event.target.parentElement)
 end)
 resizePenSizeCanvases()
 
@@ -264,7 +275,7 @@ local function cursorMove(_, event)
     app:updateCursorPosition(cx, cy)
 end
 inputCanvas:addEventListener("mousemove", function(_, event)
-    cursorMove(_, event)
+    cursorMove(nil, event)
     app:setCursorTrackingEnabled(true)
 end)
 
