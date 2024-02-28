@@ -103,25 +103,21 @@ local function loadFunc(text)
 
     local chunk = load("return "..text, "user function", "t", exportedValues)
     if not chunk then
-        reportError "Could not compile"
-        return nil
+        return nil, "Could not compile"
     end
     local ok, result = pcall(chunk)
     if not ok then
-        reportError(result)
-        return nil
+        return nil, result
     end
     if result == nil then
-        reportError "Nil expression"
-        return nil
+        return nil, "Nil expression"
     end
 
-    clearError()
     if tostring(result) == tostring(app:getFunc()) then
         -- function didnt change, only minor edits (like removing whitespace)
-        return nil
+        return nil, nil
     else
-        return result
+        return result, nil
     end
 end
 
@@ -153,7 +149,12 @@ end
 
 local lastLoadedFunc
 local function updateFuncToLuaExpression(luaExpr)
-    local newFunc = loadFunc(luaExpr)
+    local newFunc, errorMsg = loadFunc(luaExpr)
+    if errorMsg then
+        reportError(errorMsg)
+    else
+        clearError()
+    end
     if newFunc then
         if type(newFunc) == "number" then
             newFunc = im.asComplex(newFunc)
@@ -164,7 +165,6 @@ local function updateFuncToLuaExpression(luaExpr)
         if sd.isExpression(newFunc) then
             lastLoadedFunc = luaExpr
             app:setFunc(newFunc)
-            clearError()
         else
             reportError "Incomplete expression"
         end
