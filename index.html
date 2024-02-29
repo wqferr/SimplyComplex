@@ -6,7 +6,6 @@
     <link rel="stylesheet" href="style/normalize.css" />
     <link rel="stylesheet" href="style/main.css" />
     <link rel="stylesheet" href="style/tutorial.css"/>
-    <link rel="stylesheet" href="mathquill-0.10.1/mathquill.css" />
 
     <link rel="manifest" href="SimplyComplex.webmanifest" />
 
@@ -19,11 +18,6 @@
     <title>Simply Complex</title>
 
     <script type="text/javascript" src="js/fengari-web.js" async></script>
-    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
-    <script type="text/javascript" src="mathquill-0.10.1/mathquill.min.js"></script>
-    <script type="text/javascript">
-        var MQ = MathQuill.getInterface(2);
-    </script>
 </head>
 <body>
     <header>
@@ -95,14 +89,14 @@
                 <h3>Why would anyone make this?</h3>
                 <p>
                 Complex function visualization is&#8230; well&#8230; complex. "Regular" ℝ&nbsp;→&nbsp;ℝ functions
-                are easy: just graph the output against the input. 2 dimensions, easily fits in our 3-dimensional
+                are easy: just graph the output against the input. 2 dimensions, easily fits in our 3&#8209;dimensional
                 world. Even ℝ<sup>2</sup>&nbsp;→&nbsp;ℝ and ℝ&nbsp;→&nbsp;ℝ<sup>2</sup> functions can be visualized like this.
                 </p>
                 <p>
-                The complex plane, however, is 2-dimensional itself. If we wanted to graph output against input,
+                The complex plane, however, is 2&#8209;dimensional itself. If we wanted to graph output against input,
                 we'd need 4 dimensions, so we have to be more creative with visualization. One well estabilished
                 technique is <a href="https://en.wikipedia.org/wiki/Domain_coloring" target="_blank" title="Domain coloring Wikipedia article">domain coloring</a>,
-                where you have a 2-dimensional output image whose pixels are mapped to points in the complex plane.
+                where you have a 2&#8209;dimensional output image whose pixels are mapped to points in the complex plane.
                 The color of each pixel is then determined by the function value at that pixel's corresponding complex point,
                 with the hue being mapped to the function value's principal argument, and color intensity (or "value") being mapped
                 to its absolute value.
@@ -156,7 +150,7 @@
                 </p>
                 <p>
                 You can test the path width scaling yourself: try making a path that starts off far from the origin, and goes
-                towards it and eventually reaches it. If the function is set to <span class="math">f\left(z\right) = z^2</span>, the output
+                towards it and eventually reaches it. If the function is set to <span class="math">f(z)&nbsp;=&nbsp;z<sup>2</sup></span>, the output
                 path width will visibly decrease when it gets closer to the origin, eventually disappearing.
                 </p>
             </section>
@@ -197,14 +191,12 @@
                 </p>
             </section>
         </article>
-        <script type="text/javascript" src="js/render-math.js"></script>
         <script type="text/javascript" src="js/embed-youtube-on-scroll.js" async></script>
 
         <footer>
             <div id="logos">
                 <img id="poweredByLua" alt="Powered by Lua" title="Powered by Lua" src="img/powered-by-lua.png" />
                 <a href="https://github.com/wqferr/simplycomplex" title="Hosted on GitHub"><img id="gitHubMark" alt="Hosted on GitHub" title="Hosted on GitHub" src="svg/github-mark.svg" /></a>
-                <a href="http://mathquill.com/" title="MathQuill support coming soon"><img id="mathQuillLogo" alt="MathQuill support coming soon" title="MathQuill support coming soon" src="img/mathquill.png" height="50px" /></a>
             </div>
             <ul id="credits">
                 <li>SimplyComplex © 2024 <a href="https://github.com/wqferr" target="_blank" title="Check out my other projects on GitHub">William Quelho Ferreira</a> <span class="credits-mdash">&mdash;</span> wqferr@gmail.com</li>
@@ -216,7 +208,6 @@
                     <a href="https://github.com/JJSax" target="_blank" title="Check out his work on GitHub">Jared Augerot</a>
                 </li>
                 <li>JavaScript Lua VM by <a href="https://github.com/fengari-lua/fengari" target="_blank" title="Check out their work on GitHub">Fengari project</a></li>
-                <li>Math rendering in HTML by <a href="http://mathquill.com/" target="_blank" title="Check out the official website">MathQuill</a>
             </ul>
         </footer>
     </main>
