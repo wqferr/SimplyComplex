@@ -1,37 +1,5 @@
 local sd = _G.sd
 local im = _G.im
--- sd.setNumericChecks {
---     isNumeric = function(x)
---         return type(x) == "number" or im.isComplex(x)
---     end,
---     isZero = function(x)
---         return x == 0 or x == im.zero
---     end,
---     isOne = function(x)
---         return x == 1 or x == im.one
---     end
--- }
-
-local replacedFuncs = {
-    "exp",
-    "ln",
-    "sqrt",
-    "sin",
-    "cos",
-    "tan",
-    "sinh",
-    "cosh",
-    "tanh",
-}
-for k, v in pairs(replacedFuncs) do
-    if type(k) == "number" then
-        sd[v].func = im[v]
-    else
-        sd[k].func = im[v]
-    end
-end
-
--- TODO: fix hyperbolic trig functions
 
 local one = sd.const(im.one)
 local constOne = sd.func(function() return one end)

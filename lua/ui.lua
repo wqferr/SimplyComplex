@@ -8,7 +8,7 @@ local sd = _G.sd
 local Bounds = require "bounds"
 local App = require "app"
 require "constants"
-require "im-sd-bridge"
+require "extra-funcs"
 
 -- TODO: add actual line smoothing to input
 local document = js.global.document
