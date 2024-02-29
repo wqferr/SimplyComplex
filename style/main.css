@@ -152,11 +152,11 @@ header > h1 {
 /* Chrome check, since it doesn't properly darken buttons on hover and click */
 @media screen and (-webkit-min-device-pixel-ratio: 0) {
     .darken-on-hover:hover {
-        filter: brightness(80%);
+        filter: brightness(90%);
     }
 
     .darken-on-hover:active {
-        filter: brightness(50%);
+        filter: brightness(75%);
     }
 }
 
