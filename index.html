@@ -21,7 +21,7 @@
 </head>
 <body>
     <header>
-        <h1>Simplyℂomplex</h1>
+        <h1>Simply<math display="inline"><mi>ℂ</mi></math>omplex</h1>
     </header>
 
     <main>
@@ -88,9 +88,33 @@
             <section id="whyDoThis">
                 <h3>Why would anyone make this?</h3>
                 <p>
-                Complex function visualization is&#8230; well&#8230; complex. "Regular" ℝ&nbsp;→&nbsp;ℝ functions
+                Complex function visualization is&#8230; well&#8230; complex. "Regular"
+                <math display="inline">
+                    <mi>ℝ</mi>
+                    <mo>→</mo>
+                    <mi>ℝ</mi>
+                </math>
+                functions
                 are easy: just graph the output against the input. 2 dimensions, easily fits in our 3&#8209;dimensional
-                world. Even ℝ<sup>2</sup>&nbsp;→&nbsp;ℝ and ℝ&nbsp;→&nbsp;ℝ<sup>2</sup> functions can be visualized like this.
+                world. Even
+                <math display="inline">
+                    <msup>
+                        <mi>ℝ</mi>
+                        <mn>2</mn>
+                    </msup>
+                    <mo>→</mo>
+                    <mi>ℝ</mi>
+                </math>
+                and
+                <math display="inline">
+                    <mi>ℝ</mi>
+                    <mo>→</mo>
+                    <msup>
+                        <mi>ℝ</mi>
+                        <mn>2</mn>
+                    </msup>
+                </math>
+                functions can be visualized like this.
                 </p>
                 <p>
                 The complex plane, however, is 2&#8209;dimensional itself. If we wanted to graph output against input,
@@ -106,7 +130,13 @@
                 can have some difficulty distinguishing regions in the image. For another, it's difficult to
                 see structures that aren't centered around the origin. Sure, you can see if a path contains all
                 hues and therefore makes a loop around the origin, but try to determine whether a path makes a
-                loop around <span class="math">1&nbsp;+&nbsp;i</span> and you're in for a very bad time.
+                loop around
+                <math display="inline">
+                    <mn>1</mn>
+                    <mo>+</mo>
+                    <mi>i</mi>
+                </math>
+                and you're in for a very bad time.
                 </p>
                 <p>
                 With the limitations of domain coloring, I sought a different way to visualize what a function
@@ -122,8 +152,23 @@
                 </div>
                 <p>
                 Pixels in the input plane are mapped to complex numbers, just like in domain coloring, but instead of using
-                fixed colors for every output pixel, we use colors defined in the input plane. So if a red pixel at <span class="math">1&nbsp;+&nbsp;i</span>
-                gets mapped to <span class="math">2i</span>, the point <span class="math">2i</span> in the output plane will be colored red.
+                fixed colors for every output pixel, we use colors defined in the input plane. So if a red pixel at
+                <math display="inline">
+                    <mn>1</mn>
+                    <mo>+</mo>
+                    <mi>i</mi>
+                </math>
+                gets mapped to
+                <math display="inline">
+                    <mn>2</mn>
+                    <mi>i</mi>
+                </math>,
+                the point
+                <math display="inline">
+                    <mn>2</mn>
+                    <mi>i</mi>
+                </math>
+                in the output plane will be colored red.
                 </p>
                 <p>
                 This process distorts the input image in a unique way depending on the chosen function.
@@ -150,7 +195,18 @@
                 </p>
                 <p>
                 You can test the path width scaling yourself: try making a path that starts off far from the origin, and goes
-                towards it and eventually reaches it. If the function is set to <span class="math">f(z)&nbsp;=&nbsp;z<sup>2</sup></span>, the output
+                towards it and eventually reaches it. If the function is set to
+                <math display="inline">
+                    <mi>f</mi>
+                    <mo>(</mo>
+                    <ci>z</ci>
+                    <mo>)</mo>
+                    <mo>=</mo>
+                    <msup>
+                        <ci>z</ci>
+                        <mn>2</mn>
+                    </msup>
+                </math>, the output
                 path width will visibly decrease when it gets closer to the origin, eventually disappearing.
                 </p>
             </section>
@@ -165,9 +221,9 @@
                 <p>
                 The variables you are allowed to use are:
                 <ul class="dash-list">
-                    <li>z: a placeholder for whichever point is currently being evaluated;</li>
-                    <li>i: the imaginary unit;</li>
-                    <li>e: the base of the natural logarithm;</li>
+                    <li><math display="inline"><ci>z</ci></math>: a placeholder for whichever point is currently being evaluated;</li>
+                    <li><math display="inline"><mi>i</mi></math>: the imaginary unit;</li>
+                    <li><math display="inline"><mi>e</mi></math>: the base of the natural logarithm;</li>
                     <li>pi: the circle constant;</li>
                     <li>tau: the superior circle constant.</li>
                 </ul>
@@ -178,7 +234,7 @@
                     <li>real: real part of its argument;</li>
                     <li>imag: imaginary part of its argument;</li>
                     <li>conj: conjugate of its argument;</li>
-                    <li>exp: exponential function, base e;</li>
+                    <li>exp: exponential function, base <math display="inline"><mi>e</mi></math>;</li>
                     <li>ln: natural logarithm (principal branch);</li>
                     <li>sqrt: square root (principal value);</li>
                     <li>abs: absolute value;</li>
