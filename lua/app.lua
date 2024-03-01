@@ -27,6 +27,7 @@ require "constants"
 ---@field package maxTolerableDistanceForInterp number
 ---@field package lineWidthScalingFactor number
 ---@field package lastCursorPosition Complex
+---@field package lastPushedDerivative number
 ---@field package funcLastCursorPosition Complex
 ---@field package derivLastCursorPosition number
 ---@field package recalcThread any
@@ -182,17 +183,19 @@ end
 ---@param app App
 ---@param inputPoint Complex
 ---@param outputPoint Complex?
+---@param derivative number?
 ---@param outputThickness number?
 ---@param discontinuity boolean?
-local function pushPointSimple(app, inputPoint, outputPoint, outputThickness, discontinuity)
+local function pushPointSimple(app, inputPoint, outputPoint, derivative, outputThickness, discontinuity)
     app:lastInputSquiggle():pushPoint(inputPoint)
     app:lastInputSquiggle():drawLastSegment(app.inputPrecomputedCtx, app.inputBounds)
 
-    if not outputPoint or not outputThickness then
-        outputPoint, _, outputThickness = calculateFunc(app, inputPoint, app:lastInputSquiggle():endThickness())
+    if not outputPoint or not derivative or not outputThickness then
+        outputPoint, derivative, outputThickness = calculateFunc(app, inputPoint, app:lastInputSquiggle():endThickness())
     end
     app:lastOutputSquiggle():pushPoint(outputPoint, outputThickness, discontinuity)
     app:lastOutputSquiggle():drawLastSegment(app.outputPrecomputedCtx, app.outputBounds)
+    app.lastPushedDerivative = derivative
     app.needsRerender = true
 end
 
@@ -207,14 +210,14 @@ local function recursivelyPushPointsIfNeeded(app, args)
         targetOutputPoint, derivative, endThickness = calculateFunc(app, targetInputPoint, app:lastInputSquiggle():endThickness())
     end
     if not app:lastOutputSquiggle():hasPoints() then
-        pushPointSimple(app, targetInputPoint, targetOutputPoint, endThickness, false)
+        pushPointSimple(app, targetInputPoint, targetOutputPoint, derivative, endThickness, false)
     end
 
     local dist = (targetOutputPoint - app:lastOutputSquiggle():endPoint()):abs()
     local interpStart = app:lastInputSquiggle():endPoint()
     local interpEnd = targetInputPoint
     if dist <= app.maxTolerableDistanceForInterp then
-        pushPointSimple(app, targetInputPoint, targetOutputPoint, endThickness, false)
+        pushPointSimple(app, targetInputPoint, targetOutputPoint, derivative, endThickness, false)
     elseif depth < MAX_INTERP_TRIES then
         for i = 1, INTERP_STEPS do
             local interpT = i / INTERP_STEPS
@@ -233,7 +236,7 @@ local function recursivelyPushPointsIfNeeded(app, args)
         end
     else
         local inputDist = (targetInputPoint - app:lastInputSquiggle():endPoint()):abs()
-        pushPointSimple(app, targetInputPoint, targetOutputPoint, endThickness, isDiscontinuity(inputDist, dist, derivative))
+        pushPointSimple(app, targetInputPoint, targetOutputPoint, derivative, endThickness, isDiscontinuity(inputDist, dist, derivative))
     end
 end
 
@@ -293,8 +296,11 @@ function App:finishDrawing()
     local endX, endY = self.inputBounds:complexToPixel(self:lastInputSquiggle():endPoint())
     local dist = pixelDist(startX, startY, endX, endY)
     if dist <= CLOSE_PATH_DIST then
-        -- TODO: dont close path if it's a discontinuity
-        pushPointSimple(self, self:lastInputSquiggle():startPoint())
+        local inputDist = (self:lastInputSquiggle():startPoint() - self:lastInputSquiggle():endPoint()):abs()
+        local outputDist = (self:lastOutputSquiggle():startPoint() - self:lastOutputSquiggle():endPoint()):abs()
+        if not isDiscontinuity(inputDist, outputDist, self.lastPushedDerivative) then
+            pushPointSimple(self, self:lastInputSquiggle():startPoint())
+        end
     end
     self.userDrawing = false
 end
