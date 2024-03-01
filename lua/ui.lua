@@ -43,8 +43,6 @@ local app = App.new {
 local strokeStyleComponent = document:getElementById "strokeColor"
 local strokeStyle = strokeStyleComponent.color
 
--- TODO: use [mathquill](https://github.com/mathquill/mathquill) instead of a raw text field.
--- this will require parsing latex into a lua expression, which shouldnt be too bad
 local funcTextField = document:getElementById "func"
 
 local z = sd.var "z"
@@ -172,7 +170,6 @@ local function updateFuncToLuaExpression(luaExpr)
 end
 
 local function loadFuncFromTextField()
-    -- TODO: update this to convert MathQuill into a Lua expression in this function
     updateFuncToLuaExpression(funcTextField.value)
 end
 
