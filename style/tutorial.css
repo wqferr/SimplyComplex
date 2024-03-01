@@ -23,3 +23,7 @@
 .dash-list {
     list-style-type: "- ";
 }
+
+math[display="inline"] {
+    white-space: nowrap;
+}
