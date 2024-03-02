@@ -34,15 +34,7 @@
         import emscriptenInit from "./js/luajs.mjs";
         await emscriptenInit(LuaJS);
         LuaJS.newState().then(async (L) => {
-            let ok = false;
-            // this exception absorbing loop is required because the canvases
-            // draw.lua creates throw a wrench in the enableLuaScriptTags processing
-            while (!ok) {
-                try {
-                    await L.enableLuaScriptTags(document);
-                    ok = true;
-                } catch (e) {}
-            }
+            await L.enableLuaScriptTags(document);
         });
     </script>
 
