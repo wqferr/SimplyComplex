@@ -1,4 +1,5 @@
 {
     "$schema": "https://raw.githubusercontent.com/LuaLS/vscode-lua/v3.7.4/setting/schema.json",
-    "workspace.library": ["./lua/imagine/", "./lua/symdiff/"]
+    "workspace.library": ["./lua/imagine/", "./lua/symdiff/"],
+    "diagnostics.globals": ["js"]
 }

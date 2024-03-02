@@ -1,6 +1,5 @@
 package.path = "lua/?.lua;lua/?/?.lua;lua/?/init.lua;" .. package.path
 
-local js = require "js"
 _G.im = require "imagine"
 _G.sd = require "symdiff"
 local im = _G.im
@@ -189,7 +188,7 @@ local function renderApp()
 end
 renderApp()
 
-toolbar:addEventListener("click", function(_, event)
+toolbar:addEventListener("click", function(event)
     if event.target.id == "clear" then
         app:clear()
     elseif event.target.id == "undo" then
@@ -202,7 +201,7 @@ local selectedPenSizeColor = "#ddd"
 local lineWidth = nil
 local function rerenderPenSizeCanvases()
     local buttons = penSizeButtons.children
-    for i = 0, #buttons-1 do
+    for i = 0, buttons.length-1 do
         local button = buttons[i]
         local canvas = button.children[0]
         local ctx = canvas:getContext "2d"
@@ -224,7 +223,7 @@ end
 
 local function resizePenSizeCanvases()
     local buttons = penSizeButtons.children
-    for i = 0, #buttons-1 do
+    for i = 0, buttons.length-1 do
         local button = buttons[i]
         local canvas = button.children[0]
         local dim = button:getBoundingClientRect()
@@ -232,27 +231,27 @@ local function resizePenSizeCanvases()
     end
 end
 
-local function selectPenSize(_, button)
+local function selectPenSize(button)
     if not button.value then
         return
     end
     lineWidth = tonumber(button.value)
     rerenderPenSizeCanvases()
 end
-penSizeButtons:addEventListener("click", function(_, event)
+penSizeButtons:addEventListener("click", function(event)
     -- event target is canvas element inside button
-    selectPenSize(nil, event.target.parentElement)
+    selectPenSize(event.target.parentElement)
 end)
 resizePenSizeCanvases()
 
 -- this is 0-indexed, so this picks the middle button
-selectPenSize(nil, penSizeButtons.children[1])
+selectPenSize(penSizeButtons.children[1])
 
-strokeStyleComponent:addEventListener("change", function(_, event)
+strokeStyleComponent:addEventListener("change", function(event)
     strokeStyle = event.target.hex
 end)
 
-local function userStartPath(_, event)
+local function userStartPath(event)
     local cx, cy = getEventCoords(event)
     app:startDrawing(strokeStyle, lineWidth, cx, cy)
 end
@@ -274,17 +273,17 @@ inputCanvas:addEventListener("mouseout", function()
     userFinishPath(false)
 end)
 
-local function cursorMove(_, event)
+local function cursorMove(event)
     local cx, cy = getEventCoords(event)
     app:updateCursorPosition(cx, cy)
 end
-inputCanvas:addEventListener("mousemove", function(_, event)
-    cursorMove(nil, event)
+inputCanvas:addEventListener("mousemove", function(event)
+    cursorMove(event)
     app:setCursorTrackingEnabled(true)
 end)
 
-inputCanvas:addEventListener("touchmove", function(_, event)
-    cursorMove(nil, event)
+inputCanvas:addEventListener("touchmove", function(event)
+    cursorMove(event)
     event:preventDefault()
 end, {passive = false})
 
