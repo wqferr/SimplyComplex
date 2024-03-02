@@ -1,5 +1,3 @@
-local js = require "js"
-
 local function thread(f)
     local co = coroutine.create(f)
     local timeoutId

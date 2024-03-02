@@ -1,4 +1,3 @@
-local js = require "js"
 local arrowCanvas = js.global.document:getElementById "arrowCanvas"
 local arrowCtx = arrowCanvas:getContext "2d"
 local canvasLength = arrowCanvas.width

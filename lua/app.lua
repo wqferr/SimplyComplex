@@ -1,7 +1,5 @@
 ---@module "app"
 
-local js = require "js"
-
 local Axes = require "axes"
 local CPath = require "complexpath"
 local thread = require "thread"

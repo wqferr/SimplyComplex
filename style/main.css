@@ -20,6 +20,10 @@ header > h1 {
     align-items: stretch;
 }
 
+footer {
+    margin-top: 60px
+}
+
 #credits {
     text-align: center;
     list-style: none;

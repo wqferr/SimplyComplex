@@ -17,9 +17,27 @@
     <link rel="manifest" href="site.webmanifest" />
     <title>SimplyComplex</title>
 
-    <script type="text/javascript" src="js/fengari-web.js" async></script>
+    <script type="module" src="js/luajs.mjs"></script>
+    <!-- <script type="text/javascript"> -->
+    <!--     if (typeof WebAssembly === "object") { -->
+    <!--         WebAssembly.instantiateStreaming(fetch("js/luajs.wasm")).then( -->
+    <!--             (results) => { -->
+    <!--                 console.log(results, LuaJS); -->
+    <!--             } -->
+    <!--         ); -->
+    <!--     } -->
+    <!-- </script> -->
 </head>
 <body>
+    <script type="module" defer>
+        const LuaJS = {};
+        import emscriptenInit from "./js/luajs.mjs";
+        await emscriptenInit(LuaJS);
+        LuaJS.newState().then(async (L) => {
+            await L.enableLuaScriptTags(document);
+        });
+    </script>
+
     <header>
         <h1>Simply<math display="inline"><mi>ℂ</mi></math>omplex</h1>
     </header>
@@ -63,8 +81,8 @@
         <!-- TODO: add loading animation with dynamic SVG of a Limaçon -->
         <script type="text/javascript" src="js/resize-app-canvases.js"></script>
         <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toolcool-color-picker/dist/toolcool-color-picker.min.js"></script>
-        <script type="application/lua" src="lua/ui.lua" async></script>
-        <script type="application/lua" src="lua/arrow.lua" async></script>
+        <script type="text/lua" src="lua/ui.lua" async></script>
+        <script type="text/lua" src="lua/arrow.lua" async></script>
 
         <article id="tutorial">
             <!-- TODO: video tutorial -->
@@ -255,7 +273,7 @@
                 <a href="https://github.com/wqferr/simplycomplex" title="Hosted on GitHub"><img id="gitHubMark" alt="Hosted on GitHub" title="Hosted on GitHub" src="svg/github-mark.svg" /></a>
             </div>
             <ul id="credits">
-                <li>SimplyComplex © 2024 <a href="https://github.com/wqferr" target="_blank" title="Check out my other projects on GitHub">William Quelho Ferreira</a> <span class="credits-mdash">&mdash;</span> wqferr@gmail.com</li>
+                <li>SimplyComplex v1.1.0 © 2024 <a href="https://github.com/wqferr" target="_blank" title="Check out my other projects on GitHub">William Quelho Ferreira</a> <span class="credits-mdash">&mdash;</span> wqferr@gmail.com</li>
                 <li>Toolbar UX by <a href="https://linktr.ee/anayagf" target="_blank" title="Check out her portfolio on linktr.ee">Anayã Gimenes Ferreira</a> <span class="credits-mdash">&mdash;</span> anayagimenes@gmail.com</li>
                 <li>
                     Code help and rubber duckying by
@@ -263,7 +281,7 @@
                     --><a href="https://en.wikipedia.org/wiki/Serial_comma" target="_blank">,</a> and
                     <a href="https://github.com/JJSax" target="_blank" title="Check out his work on GitHub">Jared Augerot</a>
                 </li>
-                <li>JavaScript Lua VM by <a href="https://github.com/fengari-lua/fengari" target="_blank" title="Check out their work on GitHub">Fengari project</a></li>
+                <li>JavaScript Lua VM by <a href="https://github.com/Doridian/LuaJS" target="_blank" title="Check out their work on GitHub">Doridian's LuaJS</a></li>
             </ul>
         </footer>
     </main>
