@@ -1,5 +1,5 @@
 
-var Module = (() => {
+var LuaJS = (() => {
   var _scriptDir = import.meta.url;
   
   return (
@@ -12,4 +12,4 @@ var Module=moduleArg;var readyPromiseResolve,readyPromiseReject;Module["ready"]=
 }
 );
 })();
-export default Module;
+export default LuaJS;
