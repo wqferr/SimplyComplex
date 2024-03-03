@@ -7,7 +7,7 @@ You can check its live version [here](https://wqferr.github.io/SimplyComplex/).
 
 ## How does it work?
 
-Firstly, this project is coded almost entirely in Lua, using the Fengari VM for JavaScript.
+Firstly, this project is coded almost entirely in Lua, using the LuaJS VM for JavaScript.
 
 Paths drawn on the input canvas are warped according to a user defined function.
 The resulting paths are drawn on the output canvas with the same color. Path widths
